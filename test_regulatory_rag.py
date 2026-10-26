@@ -341,6 +341,40 @@ class RegulatoryRAGTests(unittest.TestCase):
         )
 
 
+    def test_topic_filter_rejects_small_finance_banks_for_commercial_banks_query(self):
+        payload = {
+            "title": "Small Finance Banks (Miscellaneous) Amendment Directions, 2026",
+            "text": (
+                "Section C on Limits for Non-Option Derivative Contracts "
+                "of the Small Finance Banks Directions stands deleted."
+            ),
+        }
+
+        self.assertFalse(
+            self.app.topic_relevant(
+                "What provision was deleted by the RBI Commercial Banks - "
+                "Miscellaneous Second Amendment Directions, 2026?",
+                payload,
+            )
+        )
+
+    def test_topic_filter_accepts_small_finance_banks_for_matching_query(self):
+        payload = {
+            "title": "Small Finance Banks (Miscellaneous) Amendment Directions, 2026",
+            "text": (
+                "Section C on Limits for Non-Option Derivative Contracts "
+                "of the Small Finance Banks Directions stands deleted."
+            ),
+        }
+
+        self.assertTrue(
+            self.app.topic_relevant(
+                "What provision was deleted by the RBI Small Finance Banks "
+                "Miscellaneous Amendment Directions, 2026?",
+                payload,
+            )
+        )
+
 
     # Existing test 5
 

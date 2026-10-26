@@ -80,6 +80,8 @@ GROQ_MODEL = "openai/gpt-oss-20b"
 
 
 
+
+
 # Load API keys from the project .env file.
 
 load_dotenv(BASE_DIR / ".env")
@@ -738,9 +740,14 @@ def get_relevant_change_events(question, as_of_date=None):
 
         # Exclude changes that were not yet effective by the requested date.
 
-        if as_of_date and effective_date and effective_date > as_of_date:
+        # For historical queries, require a known effective date.
+        # Publication date alone does not establish when a change took effect.
+        if as_of_date:
+            if not effective_date:
+                continue
 
-            continue
+            if effective_date > as_of_date:
+                continue
 
 
 
@@ -762,11 +769,23 @@ def get_relevant_change_events(question, as_of_date=None):
 
 
 
+        question_lower = question.lower()
+        target_title = (event.get("target_title") or "").lower()
+        provision = (event.get("provision") or "").lower()
+        event_topic = f"{target_title} {provision}"
 
+        # Keep unrelated regulatory topics out of the results.
+        if "uapa" in question_lower or "sanctions-list" in question_lower or "sanctions list" in question_lower:
+            if "sanctions list" not in event_topic and "1267" not in event_topic:
+                continue
 
+        if "small finance banks" in question_lower:
+            if "small finance banks" not in event_topic:
+                continue
 
-
-
+        if "commercial banks" in question_lower:
+            if "commercial banks" not in event_topic:
+                continue
 
 
 
@@ -985,48 +1004,32 @@ UNCERTAIN
             client = Groq(api_key=groq_key)
 
             response = client.chat.completions.create(
-
                 model=GROQ_MODEL,
-
                 messages=[
-
                     {
-
                         "role": "system",
-
                         "content": (
-
-                            "Verify claims strictly against supplied evidence. "
-
-                            "Return exactly one verdict word."
-
+                            "You are an evidence-verification system. "
+                            "Evaluate the proposed answer using only the supplied evidence. "
+                            "Return exactly one word: SUPPORTED, UNSUPPORTED, or UNCERTAIN."
                         ),
-
                     },
-
-                    {"role": "user", "content": audit_prompt},
-
+                    {
+                        "role": "user",
+                        "content": audit_prompt,
+                    },
                 ],
-
                 temperature=0,
-
-                max_completion_tokens=20,
-
+                max_completion_tokens=256,
             )
 
-
-
-            verdict = (
-
-                response.choices[0].message.content or ""
-
-            ).strip().upper()
-
-
+            raw_verdict = response.choices[0].message.content or ""
+            verdict = raw_verdict.strip().upper()
 
             if verdict in {"SUPPORTED", "UNSUPPORTED", "UNCERTAIN"}:
-
                 return verdict
+
+            print("Groq returned an invalid grounding verdict.")
 
 
 
@@ -1186,7 +1189,7 @@ def generate_answer(question, candidates, change_events=None, as_of_date=None):
 
     evidence_parts = []
 
-    for index, item in enumerate(candidates[:4], start=1):
+    for index, item in enumerate(candidates[:8], start=1):
 
         payload = item["payload"]
 
@@ -1276,6 +1279,16 @@ Rules:
 
 8. Do not claim to have checked external sources.
 
+9. Answer the specific question directly before adding background.
+10. For questions asking what was deleted, amended, or repealed, inspect
+    the supplied passages for explicit operative wording such as "stands
+    deleted". If the wording is present, state the provision identified.
+11. Match the regulator's institution type and document title exactly.
+    Do not substitute Small Finance Banks evidence for Commercial Banks
+    evidence, or vice versa.
+12. Do not say a change cannot be confirmed when the supplied evidence
+    explicitly states that change. If the evidence is genuinely incomplete
+    or contradictory, explain precisely what is missing or conflicting.
 
 
 TEMPORAL CONTEXT:
@@ -1390,7 +1403,7 @@ Write a concise answer followed by a Sources section."""
 
     print("\nNo LLM provider is currently available. Showing retrieved evidence instead.")
 
-    for index, item in enumerate(candidates[:4], start=1):
+    for index, item in enumerate(candidates[:8], start=1):
 
         payload = item["payload"]
 
@@ -1806,37 +1819,62 @@ def validate_candidate_citations(candidates, as_of_date=None):
 
 
 
-def topic_relevant(question, payload):
 
-    """Reject obviously off-topic passages for common narrow query types."""
+def topic_relevant(question, payload):
+    """Reject passages that conflict with a narrow query's topic."""
 
     question_lower = question.lower()
-
     title = str(payload.get("title", "")).lower()
-
     text = str(payload.get("text", "")).lower()
-
     combined = f"{title} {text}"
 
+    # Keep Commercial Banks and Small Finance Banks distinct when
+    # a question explicitly identifies one of those categories.
+    asks_commercial_banks = (
+        "commercial banks" in question_lower
+        or "commercial bank" in question_lower
+    )
+    asks_small_finance_banks = (
+        "small finance banks" in question_lower
+        or "small finance bank" in question_lower
+    )
 
+    is_commercial_banks = (
+        "commercial banks" in combined
+        or "commercial bank" in combined
+    )
+    is_small_finance_banks = (
+        "small finance banks" in combined
+        or "small finance bank" in combined
+    )
 
-    # Monetary-policy questions should not be answered from sanctions or
+    if asks_commercial_banks and is_small_finance_banks:
+        # Allow documents explicitly covering both categories only if
+        # they also identify the requested Commercial Banks regulation.
+        if "commercial banks" not in title and "commercial bank" not in title:
+            return False
 
-    # derivative-contract passages merely because embeddings score them highly.
+    if asks_small_finance_banks and is_commercial_banks:
+        if "small finance banks" not in title and "small finance bank" not in title:
+            return False
 
-    monetary_terms = ("repo rate", "repo", "monetary policy", "mpc", "policy rate")
+    # Preserve the existing monetary-policy relevance filter.
+    monetary_terms = (
+        "repo rate", "repo", "monetary policy", "mpc", "policy rate"
+    )
 
     if any(term in question_lower for term in monetary_terms):
-
         return any(term in combined for term in (
-
-            "repo rate", "policy repo rate", "monetary policy committee",
-
-            "monetary policy", "mpc minutes", "policy rate"
-
+            "repo rate",
+            "policy repo rate",
+            "monetary policy committee",
+            "monetary policy",
+            "mpc minutes",
+            "policy rate",
         ))
 
     return True
+
 
 
 
@@ -2366,13 +2404,10 @@ def semantic_search(question, circular, as_of_date=None):
 
 
 
-        if show_debug and change_events:
-
+        if show_debug and relevant_change_events:
             print("\nRelevant stored regulatory changes:\n")
 
-
-
-            for event in change_events:
+            for event in relevant_change_events:
 
                 print(f"Change ID: {event['change_id']}")
 
