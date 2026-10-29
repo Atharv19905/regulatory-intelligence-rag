@@ -1,0 +1,141 @@
+﻿import json
+from pathlib import Path
+
+SOURCES = [
+    {
+        "source_id": "rbi_circulars",
+        "name": "Index to RBI Circulars",
+        "url": "https://www.rbi.org.in/scripts/BS_CircularIndexDisplay.aspx",
+        "document_type": "circular",
+        "format_hint": "html_pdf",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_notifications",
+        "name": "Notifications",
+        "url": "https://www.rbi.org.in/scripts/NotificationUser.aspx",
+        "document_type": "notification",
+        "format_hint": "html_pdf",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_master_directions",
+        "name": "Master Directions",
+        "url": "https://www.rbi.org.in/scripts/BS_ViewMasterDirections.aspx",
+        "document_type": "master_direction",
+        "format_hint": "html_pdf",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_master_circulars",
+        "name": "Master Circulars",
+        "url": "https://www.rbi.org.in/scripts/BS_ViewMasterCirculardetails.aspx",
+        "document_type": "master_circular",
+        "format_hint": "html_pdf",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_amendment_directions",
+        "name": "Amendment Directions",
+        "url": "https://www.rbi.org.in/scripts/Fs_AmendmentDirections.aspx",
+        "document_type": "amendment_direction",
+        "format_hint": "html_pdf",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_standalone_circulars",
+        "name": "Standalone Circulars",
+        "url": "https://www.rbi.org.in/scripts/BS_ViewListofstandalonecirculars.aspx",
+        "document_type": "standalone_circular",
+        "format_hint": "html_pdf",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_withdrawn_circulars",
+        "name": "Circulars Withdrawn",
+        "url": "https://www.rbi.org.in/scripts/NotificationUserWithdrawnCircular.aspx",
+        "document_type": "withdrawn_circular",
+        "format_hint": "html_pdf",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_faqs",
+        "name": "FAQs",
+        "url": "https://www.rbi.org.in/Scripts/FAQDisplay.aspx",
+        "document_type": "faq",
+        "format_hint": "html",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_press_releases",
+        "name": "Press Releases",
+        "url": "https://www.rbi.org.in/scripts/BS_PressReleaseDisplay.aspx",
+        "document_type": "press_release",
+        "format_hint": "html_pdf",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_reports",
+        "name": "Reports",
+        "url": "https://www.rbi.org.in/scripts/Publications.aspx?publication=Reports",
+        "document_type": "report",
+        "format_hint": "html_pdf",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_bulletin",
+        "name": "RBI Bulletin",
+        "url": "https://www.rbi.org.in/Scripts/BS_ViewBulletin.aspx",
+        "document_type": "bulletin",
+        "format_hint": "html_pdf",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_annual_report",
+        "name": "Annual Report",
+        "url": "https://www.rbi.org.in/scripts/AnnualReportMainDisplay.aspx",
+        "document_type": "annual_report",
+        "format_hint": "html_pdf",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_financial_stability",
+        "name": "Financial Stability Report",
+        "url": "https://www.rbi.org.in/Scripts/FsReports.aspx",
+        "document_type": "financial_stability_report",
+        "format_hint": "html_pdf",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_statistics",
+        "name": "Data Releases",
+        "url": "https://www.rbi.org.in/scripts/Statistics.aspx",
+        "document_type": "statistical_release",
+        "format_hint": "html_pdf_table",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_handbook_statistics",
+        "name": "Handbook of Statistics on Indian Economy",
+        "url": "https://www.rbi.org.in/Scripts/AnnualPublications.aspx?head=Handbook%20of%20Statistics%20on%20Indian%20Economy",
+        "document_type": "statistical_publication",
+        "format_hint": "html_pdf_table",
+        "enabled": True,
+    },
+    {
+        "source_id": "rbi_dbie",
+        "name": "Database on Indian Economy",
+        "url": "https://data.rbi.org.in",
+        "document_type": "structured_dataset",
+        "format_hint": "structured_data",
+        "enabled": True,
+    },
+]
+
+output = Path("data/versions/rbi_sources.json")
+output.parent.mkdir(parents=True, exist_ok=True)
+output.write_text(
+    json.dumps(SOURCES, indent=2, ensure_ascii=False),
+    encoding="utf-8",
+)
+print(f"Saved {len(SOURCES)} source definitions to {output}")
