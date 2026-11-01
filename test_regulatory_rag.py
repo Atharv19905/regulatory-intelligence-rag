@@ -1166,7 +1166,111 @@ class RegulatoryRAGTests(unittest.TestCase):
 
         self.assertEqual(events, [])
 
+    @patch("search_circular.genai.Client")
+    def test_grounding_uses_gemini_when_groq_key_missing(self, mock_gemini):
+        mock_response = mock_gemini.return_value.models.generate_content.return_value
+        mock_response.text = "SUPPORTED"
 
+        with patch.dict(
+            "os.environ",
+            {"GEMINI_API_KEY": "test-gemini-key"},
+            clear=True,
+        ):
+            result = self.app.check_answer_grounding(
+                "What was the repo rate?",
+                "The repo rate was 5.50%.",
+                "The policy repo rate was increased to 5.50%.",
+            )
+
+        self.assertEqual(result, "SUPPORTED")
+        mock_gemini.assert_called_once()
+        mock_gemini.return_value.models.generate_content.assert_called_once()
+
+    @patch("search_circular.display_answer_if_supported")
+    @patch("search_circular.genai.Client")
+    @patch("search_circular.Groq")
+    def test_generate_answer_falls_back_when_groq_answer_is_unsupported(
+        self,
+        mock_groq,
+        mock_gemini,
+        mock_display,
+    ):
+        from types import SimpleNamespace
+
+        mock_groq.return_value.chat.completions.create.return_value.choices = [
+            SimpleNamespace(
+                message=SimpleNamespace(
+                    content="The repo rate was 7.00%."
+                )
+            )
+        ]
+
+        mock_gemini.return_value.models.generate_content.return_value.text = (
+            "The repo rate was 5.50%."
+        )
+
+        # Groq answer rejected; Gemini answer accepted.
+        mock_display.side_effect = [False, True]
+
+        candidate = self.make_candidate()
+
+        with patch.dict(
+            "os.environ",
+            {
+                "GROQ_API_KEY": "test-groq-key",
+                "GEMINI_API_KEY": "test-gemini-key",
+            },
+            clear=True,
+        ):
+            with patch("builtins.print"):
+                self.app.generate_answer(
+                    "What was the repo rate?",
+                    [candidate],
+                )
+
+        self.assertEqual(mock_display.call_count, 2)
+        mock_groq.return_value.chat.completions.create.assert_called_once()
+        mock_gemini.return_value.models.generate_content.assert_called_once()
+
+    @patch("search_circular.display_answer_if_supported")
+    @patch("search_circular.genai.Client")
+    def test_generate_answer_falls_back_when_gemini_answer_is_unsupported(
+        self,
+        mock_gemini,
+        mock_display,
+    ):
+        mock_gemini.return_value.models.generate_content.return_value.text = (
+            "The repo rate was 7.00%."
+        )
+
+        mock_display.return_value = False
+
+        candidate = self.make_candidate()
+
+        with patch.dict(
+            "os.environ",
+            {"GEMINI_API_KEY": "test-gemini-key"},
+            clear=True,
+        ):
+            with patch("builtins.print") as mock_print:
+                self.app.generate_answer(
+                    "What was the repo rate?",
+                    [candidate],
+                )
+
+        mock_display.assert_called_once()
+
+        printed_output = "\n".join(
+            str(call.args[0])
+            for call in mock_print.call_args_list
+            if call.args
+        )
+
+        self.assertIn("Showing retrieved evidence instead", printed_output)
+        self.assertIn(
+            "The repo rate was 5.50 per cent.",
+            printed_output,
+        )
 
 
 

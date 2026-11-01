@@ -915,191 +915,100 @@ def get_relevant_change_events(question, as_of_date=None):
 
 
 
+
 def check_answer_grounding(question, answer, evidence):
-
-    """
-
-    Check whether an answer's factual claims are supported by supplied evidence.
-
-
-
-    Returns SUPPORTED, UNSUPPORTED, or UNCERTAIN.
-
-    Returns UNCERTAIN if the check cannot be completed.
-
-    """
+    """Verify an answer using Groq, then Gemini. Fail closed if unavailable."""
 
     if not answer or not evidence:
-
         return "UNCERTAIN"
 
-
-
     audit_prompt = f"""
-
 You are a strict evidence-verification system for banking regulations.
-
-
 
 Compare the proposed answer with the supplied evidence.
 
-
-
 Rules:
-
-- Check factual claims, dates, numbers, regulatory requirements, and conclusions.
-
+- Check factual claims, dates, numbers and regulatory requirements.
 - A citation existing does not automatically make a claim supported.
-
 - Treat stored change events as recorded claims, not automatically verified facts.
-
 - Do not use outside knowledge.
-
-- If any material factual claim is contradicted or unsupported, return UNSUPPORTED.
-
-- If the evidence is ambiguous or insufficient, return UNCERTAIN.
-
+- If a material factual claim is unsupported or contradicted, return UNSUPPORTED.
+- If evidence is ambiguous or insufficient, return UNCERTAIN.
 - Return SUPPORTED only when all material factual claims are supported.
 
-
-
 Question:
-
 {question}
 
-
-
 Evidence:
-
 {evidence}
 
-
-
 Proposed answer:
-
 {answer}
 
-
-
 Return exactly one word:
-
 SUPPORTED
-
 UNSUPPORTED
-
 or
-
 UNCERTAIN
-
 """
 
-
-
     groq_key = os.getenv("GROQ_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
 
     if groq_key:
-
         try:
-
             client = Groq(api_key=groq_key)
-
             response = client.chat.completions.create(
                 model=GROQ_MODEL,
                 messages=[
                     {
                         "role": "system",
                         "content": (
-                            "You are an evidence-verification system. "
-                            "Evaluate the proposed answer using only the supplied evidence. "
-                            "Return exactly one word: SUPPORTED, UNSUPPORTED, or UNCERTAIN."
+                            "Verify using only supplied evidence. "
+                            "Return exactly SUPPORTED, UNSUPPORTED, or UNCERTAIN."
                         ),
                     },
-                    {
-                        "role": "user",
-                        "content": audit_prompt,
-                    },
+                    {"role": "user", "content": audit_prompt},
                 ],
                 temperature=0,
                 max_completion_tokens=256,
             )
 
-            raw_verdict = response.choices[0].message.content or ""
-            verdict = raw_verdict.strip().upper()
+            raw = response.choices[0].message.content or ""
+            verdict = raw.strip().upper()
 
             if verdict in {"SUPPORTED", "UNSUPPORTED", "UNCERTAIN"}:
                 return verdict
 
             print("Groq returned an invalid grounding verdict.")
 
-
-
         except Exception as error:
-
             print(f"Groq grounding check failed: {error}")
 
-
-
-        gemini_key = os.getenv("GEMINI_API_KEY")
-
-
-
     if gemini_key:
-
-        client = genai.Client()
-
-
-
-        # Retry transient service failures, but keep the retry limit small.
-
         for attempt in range(3):
-
             try:
-
+                client = genai.Client(api_key=gemini_key)
                 response = client.models.generate_content(
-
                     model=GEMINI_MODEL,
-
                     contents=audit_prompt,
-
                 )
 
+                raw = (response.text or "").strip().upper()
 
-
-                verdict = (response.text or "").strip().upper()
-
-
-
-                if verdict in {"SUPPORTED", "UNSUPPORTED", "UNCERTAIN"}:
-
-                    return verdict
-
-
+                if raw in {"SUPPORTED", "UNSUPPORTED", "UNCERTAIN"}:
+                    return raw
 
                 print("Gemini returned an invalid grounding verdict.")
 
-                return "UNCERTAIN"
-
-
-
             except Exception as error:
+                print(f"Gemini grounding check failed: {error}")
 
-                print(
-
-                    f"Gemini grounding check failed "
-
-                    f"(attempt {attempt + 1}/3): {error}"
-
-                )
-
-
-
-                if attempt < 2:
-
-                    time.sleep(2 ** attempt)
-
-
+            if attempt < 2:
+                time.sleep(2 ** attempt)
 
     return "UNCERTAIN"
+
 
 
 
@@ -1344,16 +1253,13 @@ Write a concise answer followed by a Sources section."""
             answer = response.choices[0].message.content
 
             if answer:
-
-                display_answer_if_supported(
-
+                if display_answer_if_supported(
                     question, answer, evidence, "Groq"
+                ):
+                    return
 
-                )
-
-                return
-
-            print("Groq returned an empty answer; trying Gemini if configured.")
+                print("\nGroq answer failed grounding verification.")
+                print("Trying Gemini if configured.")
 
         except Exception as error:
 
@@ -1378,16 +1284,13 @@ Write a concise answer followed by a Sources section."""
             answer = response.text
 
             if answer:
-
-                display_answer_if_supported(
-
+                if display_answer_if_supported(
                     question, answer, evidence, "Gemini fallback"
+                ):
+                    return
 
-                )
-
-                return
-
-            print("Gemini returned an empty answer.")
+                print("\nGemini answer failed grounding verification.")
+                print("Showing retrieved evidence instead.")
 
         except Exception as error:
 
