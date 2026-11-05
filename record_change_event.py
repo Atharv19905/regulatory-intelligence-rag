@@ -87,15 +87,25 @@ def find_amendment():
 
 
 def extract_amendment_evidence(pdf_path):
-    with pymupdf.open(pdf_path) as pdf:
-        full_text = "\n".join(page.get_text() for page in pdf)
-
     required_phrases = [
         "Limits for Non-Option Derivative Contracts",
         "paragraph 37",
         "stands deleted",
         "come into effect immediately",
     ]
+
+    page_texts = []
+
+    with pymupdf.open(pdf_path) as pdf:
+        for page_number, page in enumerate(pdf, start=1):
+            page_texts.append({
+                "page_number": page_number,
+                "text": page.get_text()
+            })
+
+    full_text = "\n".join(
+        page["text"] for page in page_texts
+    )
 
     missing = [
         phrase for phrase in required_phrases
@@ -108,20 +118,125 @@ def extract_amendment_evidence(pdf_path):
             f"Missing phrases: {missing}"
         )
 
-    lines = full_text.splitlines()
-    evidence_lines = []
+    for page in page_texts:
+        lines = page["text"].splitlines()
 
-    for index, line in enumerate(lines):
-        if "stands deleted" in line.casefold():
-            start = max(0, index - 3)
-            end = min(len(lines), index + 2)
-            evidence_lines = lines[start:end]
-            break
+        for index, line in enumerate(lines):
+            if "stands deleted" in line.casefold():
+                start = max(0, index - 3)
+                end = min(len(lines), index + 3)
 
-    return "\n".join(evidence_lines).strip()
+                excerpt = "\n".join(lines[start:end]).strip()
 
+                return (
+                    f"[PDF page {page['page_number']}]\n"
+                    f"{excerpt}"
+                )
 
-def save_change(amendment, evidence):
+    raise RuntimeError(
+        "Required deletion evidence was found in the PDF, "
+        "but its page could not be identified."
+    )
+
+def build_sfb_comparison_report(updated_pdf_path, amendment_evidence):
+    """
+    Compare the archived historical paragraph with the updated
+    RBI consolidated document and amendment evidence.
+
+    This is a candidate deletion assessment, not independent
+    verification of the historical RBI wording.
+    """
+
+    updated_pages = []
+
+    with pymupdf.open(updated_pdf_path) as pdf:
+        for page_number, page in enumerate(pdf, start=1):
+            updated_pages.append({
+                "page_number": page_number,
+                "text": page.get_text()
+            })
+
+    updated_text = "\n".join(
+        page["text"] for page in updated_pages
+    )
+
+    historical_normalized = " ".join(OLD_TEXT.casefold().split())
+    updated_normalized = " ".join(updated_text.casefold().split())
+
+    historical_text_present = (
+        historical_normalized in updated_normalized
+    )
+
+    heading_present_in_body = any(
+        "Limits for Non-Option Derivative Contracts".casefold()
+        in page["text"].casefold()
+        for page in updated_pages
+        if page["page_number"] != 2
+    )
+
+    amendment_confirms_deletion = (
+        "stands deleted" in amendment_evidence.casefold()
+    )
+
+    if (
+        not historical_text_present
+        and not heading_present_in_body
+        and amendment_confirms_deletion
+    ):
+        status = "candidate_deletion"
+    else:
+        status = "requires_manual_review"
+
+    return {
+        "target_title": TARGET_TITLE,
+        "provision": PROVISION,
+        "status": status,
+        "historical_text": OLD_TEXT,
+        "historical_source": HISTORICAL_SOURCE_URL,
+        "historical_source_status": "secondary_source_unverified",
+        "updated_pdf": str(updated_pdf_path),
+        "updated_pdf_date": "2026-10-19",
+        "historical_text_present_in_updated_pdf": historical_text_present,
+        "provision_heading_present_in_updated_body": heading_present_in_body,
+        "amendment_evidence": amendment_evidence,
+        "amendment_confirms_deletion": amendment_confirms_deletion,
+        "requires_historical_source_verification": True,
+    }
+
+def build_comparison_report(old_pdf_path, new_pdf_path):
+    from compare_versions import extract_pdf_pages, compare_pages
+
+    old_pages = extract_pdf_pages(old_pdf_path)
+    new_pages = extract_pdf_pages(new_pdf_path)
+
+    differences = compare_pages(old_pages, new_pages)
+
+    return {
+        "old_pdf": str(old_pdf_path),
+        "new_pdf": str(new_pdf_path),
+        "status": (
+            "identical"
+            if differences["identical"]
+            else "differences_found"
+        ),
+        "added": differences["added"],
+        "removed": differences["removed"],
+        "modified": differences["modified"],
+    }
+
+def save_change(amendment, evidence, report):
+    if report["status"] != "candidate_deletion":
+        raise ValueError("Comparison is not eligible for event recording.")
+
+    if not report["amendment_confirms_deletion"]:
+        raise ValueError("Amendment deletion evidence is missing.")
+
+    if not report["requires_historical_source_verification"]:
+        raise ValueError(
+            "Expected explicit historical-source verification status."
+        )
+
+    # Keep the existing save_change() implementation below.
     connection = sqlite3.connect(DB_PATH)
 
     try:
@@ -221,15 +336,80 @@ def save_change(amendment, evidence):
     finally:
         connection.close()
 
+def validate_sfb_comparison_report(report):
+    """Allow final event recording only after source verification."""
+
+    if report.get("status") != "candidate_deletion":
+        raise ValueError("Comparison is not eligible for event recording.")
+
+    if not report.get("amendment_confirms_deletion"):
+        raise ValueError("Official amendment deletion evidence is missing.")
+
+    if report.get("historical_source_status") != "verified":
+        raise ValueError(
+            "Historical wording is unverified. "
+            "Do not record this as a confirmed regulatory change."
+        )
+
+    return True
+
+def build_sfb_candidate_event(report, amendment):
+    """Create a retrieval-ready candidate without saving it to the database."""
+
+    validate_sfb_comparison_report_candidate(report)
+
+    return {
+        "target_title": report["target_title"],
+        "provision": report["provision"],
+        "change_type": "candidate_deletion",
+        "effective_date": amendment.get("effective_date"),
+        "publication_date": amendment.get("publication_date"),
+        "amendment_source_url": amendment["source_url"],
+        "amendment_evidence": report["amendment_evidence"],
+        "provenance_status": (
+            "UNVERIFIED CANDIDATE: historical wording comes from "
+            "a secondary source; do not present as a confirmed change."
+        ),
+        "requires_historical_source_verification": True,
+    }
+
+
+def validate_sfb_comparison_report_candidate(report):
+    if report.get("status") != "candidate_deletion":
+        raise ValueError("Report is not a deletion candidate.")
+
+    if not report.get("amendment_confirms_deletion"):
+        raise ValueError("Official amendment evidence is missing.")
+
+    return True
 
 def main():
     amendment = find_amendment()
-    evidence = extract_amendment_evidence(amendment["pdf_path"])
 
-    print("Verified amendment evidence:")
-    print(evidence)
+    evidence = extract_amendment_evidence(
+        amendment["pdf_path"]
+    )
 
-    save_change(amendment, evidence)
+    report = build_sfb_comparison_report(
+        BASE_DIR / "data" / "raw" / "204MD.pdf",
+        evidence
+    )
+
+    print("\n========== SFB COMPARISON REPORT ==========")
+
+    for key, value in report.items():
+        print(f"\n{key}:\n{value}")
+
+    if report["status"] != "candidate_deletion":
+        raise RuntimeError(
+            "Comparison requires manual review. "
+            "No change event was recorded."
+        )
+
+    print(
+        "\nCandidate deletion identified. "
+        "Historical source verification is still required."
+    )
 
 
 if __name__ == "__main__":

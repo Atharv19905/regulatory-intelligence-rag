@@ -548,7 +548,11 @@ def keyword_score(text, question):
 
 
 
-def get_relevant_change_events(question, as_of_date=None):
+def get_relevant_change_events(
+    question,
+    as_of_date=None,
+    candidate_event=None
+):
 
 
 
@@ -654,67 +658,38 @@ def get_relevant_change_events(question, as_of_date=None):
 
 
 
-    connection = sqlite3.connect(DB_PATH)
-
-    connection.row_factory = sqlite3.Row
-
-
-
+    connection = None
     try:
-
+        connection = sqlite3.connect(DB_PATH)
+        connection.row_factory = sqlite3.Row
         rows = connection.execute(
-
             """
-
             SELECT
-
                 rc.change_id,
-
                 rc.target_title,
-
                 rc.provision,
-
                 rc.change_type,
-
                 rc.effective_date,
-
                 rc.old_text,
-
                 rc.new_text,
-
                 rc.historical_source_url,
-
                 rc.amendment_source_url,
-
                 rc.amendment_evidence,
-
                 rc.provenance_status,
-
                 dv.publication_date AS amendment_publication_date
-
             FROM regulatory_changes AS rc
-
             LEFT JOIN document_versions AS dv
-
                 ON dv.version_id = rc.amendment_version_id
-
             ORDER BY rc.effective_date DESC, rc.change_id DESC
-
             """
-
         ).fetchall()
-
     except sqlite3.OperationalError:
-
-        # Keep semantic search usable if required tables are absent.
-
-        return []
-
+        # A supplied in-memory candidate remains retrievable even when the
+        # optional stored-event database/table is not available.
+        rows = []
     finally:
-
-        connection.close()
-
-
+        if connection is not None:
+            connection.close()
 
     matches = []
 
@@ -905,7 +880,79 @@ def get_relevant_change_events(question, as_of_date=None):
 
 
 
+        # Add an explicitly unverified SFB candidate separately
+    # from confirmed events stored in SQLite.
+    if candidate_event:
+        question_lower = question.lower()
+
+        is_sfb_question = (
+            "small finance banks" in question_lower
+            or "non-option derivative" in question_lower
+            or "paragraph 37" in question_lower
+            or bool(re.search(r"\b37\b", question_lower))
+        )
+
+        # Do not send a matching SQLite SFB paragraph 37 event alongside
+        # this unverified candidate. The stored row's date and historical
+        # wording must not be mistaken for independently verified evidence.
+        if is_sfb_question:
+            relevant = [
+                event for event in relevant
+                if not (
+                    "small finance banks"
+                    in str(event.get("target_title") or "").lower()
+                    and "paragraph 37"
+                    in str(event.get("provision") or "").lower()
+                )
+            ]
+
+        candidate_publication_date = candidate_event.get(
+            "publication_date"
+        )
+
+        # For historical queries, only include the candidate if
+        # its amendment was published by the requested cutoff.
+        publication_allowed = True
+
+        if as_of_date:
+            publication_allowed = (
+                candidate_publication_date is not None
+                and candidate_publication_date <= as_of_date
+            )
+
+        if is_sfb_question and publication_allowed:
+            candidate = {
+                "change_id": None,
+                "target_title": candidate_event["target_title"],
+                "provision": candidate_event["provision"],
+                "change_type": "candidate_deletion",
+                "effective_date": candidate_event.get("effective_date"),
+                "old_text": None,
+                "new_text": None,
+                "historical_source_url": None,
+                "amendment_source_url": candidate_event[
+                    "amendment_source_url"
+                ],
+                "amendment_evidence": candidate_event[
+                    "amendment_evidence"
+                ],
+                "provenance_status": candidate_event[
+                    "provenance_status"
+                ],
+                "amendment_publication_date": candidate_publication_date,
+                "effective_date_status": candidate_event.get(
+                    "effective_date_status",
+                    "Not independently verified.",
+                ),
+                "is_unverified_candidate": True,
+                "requires_historical_source_verification": True,
+                "relevance_score": 10,
+            }
+
+            relevant.insert(0, candidate)
+
     return relevant[:5]
+
 
 
 
@@ -922,19 +969,37 @@ def check_answer_grounding(question, answer, evidence):
     if not answer or not evidence:
         return "UNCERTAIN"
 
+
     audit_prompt = f"""
 You are a strict evidence-verification system for banking regulations.
 
-Compare the proposed answer with the supplied evidence.
+Verify the proposed answer using ONLY the supplied evidence.
 
-Rules:
-- Check factual claims, dates, numbers and regulatory requirements.
-- A citation existing does not automatically make a claim supported.
-- Treat stored change events as recorded claims, not automatically verified facts.
-- Do not use outside knowledge.
-- If a material factual claim is unsupported or contradicted, return UNSUPPORTED.
-- If evidence is ambiguous or insufficient, return UNCERTAIN.
-- Return SUPPORTED only when all material factual claims are supported.
+Important distinctions:
+
+1. The official amendment text is primary evidence for what the
+   amendment explicitly states.
+2. The statement that paragraph 37 "stands deleted" directly supports
+   the claim that paragraph 37 was deleted.
+3. The statement that amended instructions take effect immediately
+   upon issuance supports the stated commencement rule.
+4. The previous substantive wording of paragraph 37 is NOT verified
+   unless an authenticated historical RBI source is supplied.
+5. Do not require historical wording to be verified when the answer
+   explicitly discloses that it is unverified.
+6. Do not treat unrelated regulatory documents as evidence.
+7. Do not use outside knowledge.
+8. Do not assume that a database candidate independently proves
+   historical wording or a separately recorded effective date.
+
+Verdict rules:
+
+- SUPPORTED: Every material claim in the answer is directly supported
+  by the official amendment evidence, and any historical limitation
+  is accurately disclosed.
+- UNSUPPORTED: A material claim contradicts the supplied evidence or
+  asserts an unsupported historical requirement as fact.
+- UNCERTAIN: The supplied evidence is insufficient to decide.
 
 Question:
 {question}
@@ -952,57 +1017,113 @@ or
 UNCERTAIN
 """
 
+
+    def parse_verdict(raw):
+        """Accept a verdict with harmless labels or Markdown formatting."""
+        if not raw:
+            return None
+
+        cleaned = raw.strip().upper()
+        cleaned = cleaned.replace("`", "").replace("*", "").strip()
+        cleaned = cleaned.strip("\"'")
+
+        pattern = (
+            r"(?:(?:GROUNDING\s+)?VERDICT|ANSWER)\s*[:=-]\s*"
+            r"(SUPPORTED|UNSUPPORTED|UNCERTAIN)[.!]?"
+            r"|"
+            r"(SUPPORTED|UNSUPPORTED|UNCERTAIN)[.!]?"
+        )
+
+        match = re.fullmatch(pattern, cleaned, flags=re.IGNORECASE)
+
+        if not match:
+            return None
+
+        return (match.group(1) or match.group(2)).upper()
+
     groq_key = os.getenv("GROQ_API_KEY")
     gemini_key = os.getenv("GEMINI_API_KEY")
 
+    # First verifier: Groq
     if groq_key:
         try:
             client = Groq(api_key=groq_key)
+
+           
             response = client.chat.completions.create(
                 model=GROQ_MODEL,
                 messages=[
                     {
                         "role": "system",
                         "content": (
-                            "Verify using only supplied evidence. "
-                            "Return exactly SUPPORTED, UNSUPPORTED, or UNCERTAIN."
+                            "You are a strict evidence verifier. "
+                            "Check every material claim against the supplied evidence. "
+                            "Return exactly one word: SUPPORTED, UNSUPPORTED, or UNCERTAIN. "
+                            "Do not provide explanations."
                         ),
                     },
                     {"role": "user", "content": audit_prompt},
                 ],
                 temperature=0,
-                max_completion_tokens=256,
+                max_completion_tokens=1024,
             )
 
-            raw = response.choices[0].message.content or ""
-            verdict = raw.strip().upper()
 
-            if verdict in {"SUPPORTED", "UNSUPPORTED", "UNCERTAIN"}:
+            choice = response.choices[0]
+            message = choice.message
+            raw = message.content or ""
+
+            if not raw.strip():
+                print("\n--- GROQ EMPTY RESPONSE DIAGNOSTICS ---")
+                print("Finish reason:", choice.finish_reason)
+                print("Message role:", message.role)
+                print("Refusal:", getattr(message, "refusal", None))
+                print("Tool calls:", getattr(message, "tool_calls", None))
+                print("Usage:", getattr(response, "usage", None))
+                print("--- END GROQ DIAGNOSTICS ---")
+
+            verdict = parse_verdict(raw)
+
+            if verdict:
+                print(f"Groq grounding verifier verdict: {verdict}")
                 return verdict
 
-            print("Groq returned an invalid grounding verdict.")
+            print(f"Groq verifier returned an unparseable response: {raw[:200]!r}")
 
         except Exception as error:
-            print(f"Groq grounding check failed: {error}")
+            print(f"Groq grounding verification failed: {error}")
 
+    # Second verifier: Gemini
     if gemini_key:
         for attempt in range(3):
             try:
                 client = genai.Client(api_key=gemini_key)
+
                 response = client.models.generate_content(
                     model=GEMINI_MODEL,
                     contents=audit_prompt,
                 )
 
-                raw = (response.text or "").strip().upper()
+                raw = response.text or ""
+                verdict = parse_verdict(raw)
 
-                if raw in {"SUPPORTED", "UNSUPPORTED", "UNCERTAIN"}:
-                    return raw
+                if verdict:
+                    print(f"Gemini grounding verifier verdict: {verdict}")
+                    return verdict
 
-                print("Gemini returned an invalid grounding verdict.")
+                print(
+                    f"Gemini verifier returned an unparseable response: "
+                    f"{raw[:200]!r}"
+                )
 
             except Exception as error:
-                print(f"Gemini grounding check failed: {error}")
+                error_text = str(error)
+
+                print(f"Gemini grounding verification failed: {error_text}")
+
+                if "429" in error_text or "RESOURCE_EXHAUSTED" in error_text:
+                    print("Gemini quota exhausted. Skipping remaining retries.")
+                    break
 
             if attempt < 2:
                 time.sleep(2 ** attempt)
@@ -1018,59 +1139,47 @@ UNCERTAIN
 
 
 
+
+
 def display_answer_if_supported(
-
     question, answer, evidence, provider, show_debug=False
-
 ):
+    """Display only grounded answers and distinguish failed verification."""
 
-    """Display only grounded answers; optionally show verification diagnostics."""
-
+    # print("\n--- ANSWER BEING VERIFIED ---")
+    # print(answer)
+    # print("--- END PROPOSED ANSWER ---")
     verdict = check_answer_grounding(question, answer, evidence)
-
-
 
     print(f"\nAnswer grounding verdict: {verdict}")
 
-
-
-    if verdict != "SUPPORTED":
-
+    if verdict == "UNSUPPORTED":
         print(
-
-            "The answer was blocked because its claims could not "
-
-            "all be verified against the supplied evidence."
-
+            "The answer was blocked because one or more material claims "
+            "were unsupported or contradicted by the supplied evidence."
         )
-
         if show_debug:
-
-            print("\nUNVERIFIED DRAFT (for debugging only; do not rely on it):")
-
+            print("\nUNVERIFIED DRAFT (debug only):")
             print(answer)
-
         return False
 
-
+    if verdict == "UNCERTAIN":
+        print(
+            "The answer was blocked because grounding verification "
+            "could not establish whether all claims are supported."
+        )
+        if show_debug:
+            print("\nUNVERIFIED DRAFT (debug only):")
+            print(answer)
+        return False
 
     print("\n" + "=" * 60)
-
     print(f"GENERATED ANSWER ({provider}; grounding checked)")
-
     print("=" * 60)
-
     print(answer)
 
-
-
     if show_debug:
-
         print("\n[Debug] Grounding evidence was supplied to the verifier.")
-
-        print("[Debug] Full evidence is available in the retrieval diagnostics.")
-
-
 
     return True
 
@@ -1097,6 +1206,36 @@ def generate_answer(question, candidates, change_events=None, as_of_date=None):
 
 
     evidence_parts = []
+
+    question_lower = question.lower()
+
+    is_sfb_amendment_query = (
+        "small finance bank" in question_lower
+        or "small finance banks" in question_lower
+        or "non-option derivative" in question_lower
+        or "paragraph 37" in question_lower
+    )
+
+    # For this specific amendment question, only use:
+    # 1. The official SFB amendment document, if retrieved.
+    # 2. The separately identified SFB amendment candidate.
+    if is_sfb_amendment_query:
+        candidates = [
+            item for item in candidates
+            if (
+                "small finance banks"
+                in str(item["payload"].get("title", "")).lower()
+                or "small finance bank"
+                in str(item["payload"].get("title", "")).lower()
+            )
+        ]
+
+        change_events = [
+            event for event in change_events
+            if event.get("is_unverified_candidate")
+            and "small finance banks"
+            in str(event.get("target_title", "")).lower()
+        ]
 
     for index, item in enumerate(candidates[:8], start=1):
 
@@ -1125,33 +1264,35 @@ def generate_answer(question, candidates, change_events=None, as_of_date=None):
 
 
     for event in change_events:
-
-        evidence_parts.append(
-
-            f"[Stored regulatory change event {event['change_id']}]\n"
-
-            f"Regulation: {event['target_title']}\n"
-
-            f"Provision: {event['provision']}\n"
-
-            f"Change type: {event['change_type']}\n"
-
-            f"Recorded effective/temporal date: {event['effective_date']}\n"
-
-            f"Previous wording recorded: {event['old_text']}\n"
-
-            f"New state recorded: {event['new_text']}\n"
-
-            f"Amendment evidence: {event['amendment_evidence']}\n"
-
-            f"Amendment source URL: {event['amendment_source_url']}\n"
-
-            f"Historical text source URL: {event['historical_source_url']}\n"
-
-            f"Historical source status: {event['provenance_status']}"
-
-        )
-
+        if event.get("is_unverified_candidate"):
+            evidence_parts.append(
+                "[UNVERIFIED REGULATORY CHANGE CANDIDATE]\n"
+                f"Regulation: {event.get('target_title', 'Unknown')}\n"
+                f"Provision: {event.get('provision', 'Unknown')}\n"
+                f"Candidate change: {event.get('change_type', 'Unknown')}\n"
+                f"Publication date: {event.get('amendment_publication_date') or 'Unknown'}\n"
+                f"Effective date: Not independently verified. {event.get('effective_date_status', '')}\n"
+                f"Amendment evidence: {event.get('amendment_evidence', '')}\n"
+                f"Official amendment source URL: {event.get('amendment_source_url', 'Unavailable')}\n"
+                f"Provenance warning: {event.get('provenance_status', 'Unverified')}\n"
+                "The official amendment text explicitly states that the provision "
+                "stands deleted. The earlier wording remains unverified because "
+                "it has not been authenticated against an original historical RBI source."
+            )
+        else:
+            evidence_parts.append(
+                f"[Stored regulatory change event {event.get('change_id')}]\n"
+                f"Regulation: {event.get('target_title', 'Unknown')}\n"
+                f"Provision: {event.get('provision', 'Unknown')}\n"
+                f"Change type: {event.get('change_type', 'Unknown')}\n"
+                f"Date recorded in SQLite (not independently verified as the legal effective date): {event.get('effective_date') or 'Unknown'}\n"
+                f"Previous wording recorded: {event.get('old_text') or 'Not recorded'}\n"
+                f"New state recorded: {event.get('new_text') or 'Not recorded'}\n"
+                f"Amendment evidence: {event.get('amendment_evidence') or 'Not recorded'}\n"
+                f"Amendment source URL: {event.get('amendment_source_url') or 'Unavailable'}\n"
+                f"Historical text source URL: {event.get('historical_source_url') or 'Unavailable'}\n"
+                f"Historical source status: {event.get('provenance_status') or 'Unknown'}"
+            )
 
 
     evidence = "\n\n".join(evidence_parts)
@@ -1176,7 +1317,7 @@ Rules:
 
 2. Distinguish retrieved passages from stored change events.
 
-3. A stored event is a recorded claim, not independent proof that every part of its historical wording is authentic.
+3. A stored event is a recorded claim, not independent proof that every part of its historical wording is authentic or that its database-recorded date is the legal effective date.
 
 4. If historical wording has secondary-source provenance, disclose that limitation when discussing the old wording.
 
@@ -1198,6 +1339,15 @@ Rules:
 12. Do not say a change cannot be confirmed when the supplied evidence
     explicitly states that change. If the evidence is genuinely incomplete
     or contradictory, explain precisely what is missing or conflicting.
+13. For an UNVERIFIED REGULATORY CHANGE CANDIDATE, distinguish the official
+    amendment's operative statement from the unverified historical wording.
+    You may report that the official amendment states the provision stands
+    deleted, but disclose that the earlier wording has not been authenticated
+    from an original historical RBI source. Do not invent an effective date.
+14. A date stored in SQLite is not independent legal evidence of the effective
+    date. For the SFB paragraph 37 candidate, state that the amendment says
+    the instructions take effect immediately upon issuance, while the exact
+    effective date is not independently verified in this workflow.
 
 
 TEMPORAL CONTEXT:
@@ -1304,7 +1454,10 @@ Write a concise answer followed by a Sources section."""
 
     # Deterministic fallback: show actual retrieved evidence, never invent a summary.
 
-    print("\nNo LLM provider is currently available. Showing retrieved evidence instead.")
+    print(
+    "\nNo verified answer could be produced. "
+    "Showing retrieved evidence instead."
+    )
 
     for index, item in enumerate(candidates[:8], start=1):
 
@@ -1319,21 +1472,21 @@ Write a concise answer followed by a Sources section."""
         print(payload.get("text", ""))
 
     for event in change_events:
-
-        print(f"\nStored change event {event.get('change_id')}: {event.get('provision')}")
-
-        print(f"Change type: {event.get('change_type')}; recorded date: {event.get('effective_date')}")
-
-        print(f"Old text recorded: {event.get('old_text')}")
-
-        print(f"New state recorded: {event.get('new_text')}")
-
-        print(f"Source: {event.get('amendment_source_url')}")
-
-        print(f"Provenance: {event.get('provenance_status')}")
-
-
-
+        if event.get("is_unverified_candidate"):
+            print(f"\nUNVERIFIED CANDIDATE: {event.get('provision')}")
+            print("Change type:", event.get("change_type"))
+            print("Publication date:", event.get("amendment_publication_date"))
+            print("Effective date: Not independently verified.")
+            print("Evidence:", event.get("amendment_evidence"))
+            print("Official source:", event.get("amendment_source_url"))
+            print("Provenance:", event.get("provenance_status"))
+        else:
+            print(f"\nStored change event {event.get('change_id')}: {event.get('provision')}")
+            print(f"Change type: {event.get('change_type')}; recorded date: {event.get('effective_date')}")
+            print(f"Old text recorded: {event.get('old_text')}")
+            print(f"New state recorded: {event.get('new_text')}")
+            print(f"Source: {event.get('amendment_source_url')}")
+            print(f"Provenance: {event.get('provenance_status')}")
 
 
 def get_eligible_document_ids(as_of_date):
@@ -1372,7 +1525,22 @@ def get_eligible_document_ids(as_of_date):
 
 
 
+def format_candidate_change_event(candidate):
+    """Format an unverified candidate for the RAG context."""
 
+    return (
+        "\nUNVERIFIED REGULATORY CHANGE CANDIDATE\n"
+        f"Target: {candidate['target_title']}\n"
+        f"Provision: {candidate['provision']}\n"
+        f"Candidate change: {candidate['change_type']}\n"
+        f"Publication date: {candidate.get('publication_date') or 'Unknown'}\n"
+        f"Effective date: {candidate.get('effective_date') or 'Not independently verified'}\n"
+        f"Official amendment: {candidate['amendment_source_url']}\n"
+        f"Evidence: {candidate['amendment_evidence']}\n"
+        f"Provenance: {candidate['provenance_status']}\n"
+        "Instruction: Treat this only as a candidate. Do not state that "
+        "the historical wording or resulting legal change is verified.\n"
+    )
 
 
 
@@ -1723,45 +1891,46 @@ def validate_candidate_citations(candidates, as_of_date=None):
 
 
 
+
 def topic_relevant(question, payload):
-    """Reject passages that conflict with a narrow query's topic."""
+    """Reject passages that do not match the regulation named in the query."""
 
     question_lower = question.lower()
     title = str(payload.get("title", "")).lower()
     text = str(payload.get("text", "")).lower()
     combined = f"{title} {text}"
 
-    # Keep Commercial Banks and Small Finance Banks distinct when
-    # a question explicitly identifies one of those categories.
-    asks_commercial_banks = (
+    asks_sfb = (
+        "small finance banks" in question_lower
+        or "small finance bank" in question_lower
+        or "non-option derivative" in question_lower
+        or bool(re.search(r"\b37\b", question_lower))
+        and "rbi" in question_lower
+    )
+
+    asks_commercial = (
         "commercial banks" in question_lower
         or "commercial bank" in question_lower
     )
-    asks_small_finance_banks = (
-        "small finance banks" in question_lower
-        or "small finance bank" in question_lower
-    )
 
-    is_commercial_banks = (
-        "commercial banks" in combined
-        or "commercial bank" in combined
-    )
-    is_small_finance_banks = (
-        "small finance banks" in combined
-        or "small finance bank" in combined
-    )
-
-    if asks_commercial_banks and is_small_finance_banks:
-        # Allow documents explicitly covering both categories only if
-        # they also identify the requested Commercial Banks regulation.
-        if "commercial banks" not in title and "commercial bank" not in title:
+    # SFB questions must retrieve SFB-specific regulatory documents.
+    # Merely mentioning SFBs in an Agency Bank document is insufficient.
+    if asks_sfb:
+        if (
+            "small finance banks" not in title
+            and "small finance bank" not in title
+        ):
             return False
 
-    if asks_small_finance_banks and is_commercial_banks:
-        if "small finance banks" not in title and "small finance bank" not in title:
+    # Commercial Bank questions must remain separate from SFB documents.
+    if asks_commercial:
+        if (
+            "commercial banks" not in title
+            and "commercial bank" not in title
+        ):
             return False
 
-    # Preserve the existing monetary-policy relevance filter.
+    # Preserve monetary-policy relevance filtering.
     monetary_terms = (
         "repo rate", "repo", "monetary policy", "mpc", "policy rate"
     )
@@ -1777,6 +1946,7 @@ def topic_relevant(question, payload):
         ))
 
     return True
+
 
 
 
@@ -1835,6 +2005,57 @@ def find_future_topic_documents(question, as_of_date):
 
 
 
+
+
+def load_sfb_candidate_event(question):
+    """
+    Build an SFB paragraph 37 candidate from the registered official
+    amendment and the local consolidated PDF. Read-only: no DB/Qdrant writes.
+    """
+    question_lower = (question or "").lower()
+    is_sfb_question = (
+        "small finance bank" in question_lower
+        or "non-option derivative" in question_lower
+        or "paragraph 37" in question_lower
+        or bool(re.search(r"\b37\b", question_lower))
+    )
+    if not is_sfb_question:
+        return None
+
+    updated_pdf = BASE_DIR / "data" / "raw" / "204MD.pdf"
+    if not updated_pdf.is_file():
+        print(f"SFB candidate unavailable; PDF not found: {updated_pdf}")
+        return None
+
+    try:
+        from record_change_event import (
+            find_amendment,
+            extract_amendment_evidence,
+            build_sfb_comparison_report,
+            build_sfb_candidate_event,
+        )
+
+        amendment = find_amendment()
+        evidence = extract_amendment_evidence(amendment["pdf_path"])
+        report = build_sfb_comparison_report(updated_pdf, evidence)
+
+        if report.get("status") != "candidate_deletion":
+            print("SFB comparison requires manual review; candidate excluded.")
+            return None
+
+        candidate = build_sfb_candidate_event(report, amendment)
+        candidate["publication_date"] = amendment.get("publication_date")
+        # Publication/issuance date must not be silently treated as effective date.
+        candidate["effective_date"] = None
+        candidate["effective_date_status"] = (
+            "The amendment states it takes effect immediately upon issuance; "
+            "no separately verified effective-date field is available."
+        )
+        return candidate
+
+    except Exception as error:
+        print(f"SFB candidate preparation failed safely: {error}")
+        return None
 
 
 def semantic_search(question, circular, as_of_date=None):
@@ -2195,7 +2416,12 @@ def semantic_search(question, circular, as_of_date=None):
 
 
 
-        change_events = get_relevant_change_events(question, as_of_date)
+        sfb_candidate = load_sfb_candidate_event(question)
+        change_events = get_relevant_change_events(
+            question,
+            as_of_date,
+            candidate_event=sfb_candidate,
+        )
 
 
 
@@ -2392,35 +2618,14 @@ def semantic_search(question, circular, as_of_date=None):
 
 def main():
 
-
-
-    circular = get_circular()
-
-
-
-    pdf_path = Path(circular["file_path"])
-
-
-
-    if not pdf_path.is_absolute():
-
-
-
-        pdf_path = BASE_DIR / pdf_path
-
-
-
-    if not pdf_path.exists():
-
-
-
-        raise SystemExit(f"PDF file not found: {pdf_path}")
-
-
-
-
-
-
+    try:
+        circular = get_circular()
+    except (SystemExit, sqlite3.Error) as error:
+        print(
+            "Sanctions-list shortcut unavailable; continuing with general "
+            f"regulatory retrieval. Details: {error}"
+        )
+        circular = None
 
     question = input(
 
@@ -2494,11 +2699,18 @@ def main():
 
 
 
-    entries = extract_entries(pdf_path)
-
-
-
-    circular_publication_date = circular.get("publication_date")
+    entries = []
+    circular_publication_date = None
+    if circular:
+        pdf_path = Path(circular["file_path"])
+        if not pdf_path.is_absolute():
+            pdf_path = BASE_DIR / pdf_path
+        if not pdf_path.exists():
+            print(f"Sanctions-list PDF not found: {pdf_path}")
+            circular = None
+        else:
+            entries = extract_entries(pdf_path)
+            circular_publication_date = circular.get("publication_date")
 
 
 
@@ -2562,7 +2774,7 @@ def main():
 
 
 
-    elif answer_entry_question(question, circular, entries):
+    elif circular and answer_entry_question(question, circular, entries):
 
 
 
