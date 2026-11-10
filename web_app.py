@@ -366,9 +366,26 @@ def query_live_rag(question, as_of_date=None):
 
 
 class RegIntelHTTPHandler(http.server.SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        kwargs["directory"] = str(FRONTEND_DIR)
+        super().__init__(*args, **kwargs)
+
     def address_string(self):
         # Prevent reverse DNS lookup (socket.getfqdn) which causes 5-15s freeze per request on Windows
         return str(self.client_address[0])
+
+    def translate_path(self, path):
+        frontend_root = FRONTEND_DIR.resolve()
+        try:
+            target = Path(super().translate_path(path)).resolve()
+            target.relative_to(frontend_root)
+        except (OSError, RuntimeError, ValueError):
+            return str(frontend_root / "__outside_frontend__")
+        return str(target)
+
+    def list_directory(self, path):
+        self.send_error(404, "Directory listing is disabled")
+        return None
 
     def log_message(self, format, *args):
         # Lightweight logging without DNS lookups
@@ -389,40 +406,46 @@ class RegIntelHTTPHandler(http.server.SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
 
-        # Fast response for browser favicon request
         if path == "/favicon.ico":
             self.send_response(204)
             self.end_headers()
             return
 
-        if path in ("/", "/index.html"):
-            index_path = FRONTEND_DIR / "index.html"
-            if index_path.is_file():
-                content = index_path.read_bytes()
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Content-Length", str(len(content)))
-                self.send_header("Cache-Control", "no-cache")
-                self.end_headers()
-                self.wfile.write(content)
+        if path in ("/", "/landing.html"):
+            target = FRONTEND_DIR / "landing.html"
+
+        elif path in ("/index.html", "/app", "/app/"):
+            target = FRONTEND_DIR / "index.html"
+
+        else:
+            target = None
+
+        if target is not None:
+            if not target.is_file():
+                self.send_error(404, "HTML file not found")
                 return
 
+            content = target.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(content)))
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            self.wfile.write(content)
+            return
+
         if path == "/api/stats":
-            data = get_stats()
-            self._send_json(data)
+            self._send_json(get_stats())
             return
 
         if path == "/api/documents":
-            data = get_documents_from_db()
-            self._send_json(data)
+            self._send_json(get_documents_from_db())
             return
 
         if path == "/api/change-events":
-            data = get_change_events_from_db()
-            self._send_json(data)
+            self._send_json(get_change_events_from_db())
             return
 
-        # Fallback to normal static file serving
         return super().do_GET()
 
     def do_POST(self):
@@ -468,7 +491,7 @@ def run_server():
     print("RegIntel Frontend & API Server running at:")
     print(f"   http://localhost:{PORT}")
     print(f"   http://127.0.0.1:{PORT}")
-    print(f"   Serving: {FRONTEND_DIR / 'index.html'}")
+    print(f"   Landing page: {FRONTEND_DIR / 'landing.html'}")
     print("=======================================================\n")
     try:
         httpd.serve_forever()
