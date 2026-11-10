@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="description" content="ArthaOne helps banking teams explore regulatory documents, compare versions and ask questions with source-backed context." />
+  <title>ArthaOne — Banking Regulatory Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #ffffff;
+      --surface: #ffffff;
+      --ink: #101916;
+      --muted: #626c67;
+      --line: #e5e8e4;
+      --green: #126b50;
+      --green-soft: #e7f2eb;
+      --accent: #126b50;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 5.5rem;
+    }
+
+    body {
+      margin: 0;
+      background: #fff;
+      color: var(--ink);
+      font-family: "DM Sans", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    h1, h2, h3, .font-editorial {
+      font-family: "DM Sans", sans-serif;
+      font-weight: 600;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .quiet-link {
+      text-decoration-color: transparent;
+      text-underline-offset: 5px;
+      transition: color .18s ease, text-decoration-color .18s ease;
+    }
+
+    .quiet-link:hover {
+      color: var(--green);
+      text-decoration: underline;
+      text-decoration-color: #9aab9e;
+    }
+
+    .preview-window {
+      border: 1px solid #dfe4df;
+      background: var(--surface);
+      box-shadow: 0 22px 60px rgba(26, 40, 32, .09);
+    }
+
+    .temporal-marker {
+      animation: temporal-trace 7s ease-in-out infinite;
+    }
+
+    @keyframes temporal-trace {
+      0%, 8% { left: 0%; opacity: 0; }
+      16% { opacity: 1; }
+      78% { opacity: 1; }
+      92%, 100% { left: 100%; opacity: 0; }
+    }
+
+    .preview-label {
+      color: #78827a;
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .section-rule {
+      border-color: var(--line);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+
+      .temporal-marker {
+        animation: none;
+        left: 50%;
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="sticky top-0 z-50 border-b border-[#e5e8e4] bg-white/95 backdrop-blur">
+    <nav class="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-5 sm:px-8" aria-label="Main navigation">
+      <a href="#top" class="flex items-center gap-2.5" aria-label="ArthaOne home">
+        <span class="grid h-8 w-8 place-items-center rounded-sm bg-[#126b50] text-white">
+          <i data-lucide="landmark" class="h-[17px] w-[17px]"></i>
+        </span>
+        <span class="text-[17px] font-bold tracking-[-.045em] text-[#101916]">ArthaOne</span>
+      </a>
+
+      <div class="hidden items-center gap-8 text-[13px] font-medium text-[#525e57] md:flex">
+        <a class="quiet-link" href="#product">Platform</a>
+        <a class="quiet-link" href="#features">Capabilities</a>
+        <a class="quiet-link" href="#how-it-works">How it works</a>
+        <a class="quiet-link" href="#temporal-rag">Temporal RAG</a>
+      </div>
+
+      <a href="index.html" class="hidden items-center gap-2 rounded-sm bg-[#126b50] px-4 py-2.5 text-[12px] font-semibold text-white transition-colors hover:bg-[#0e583f] md:inline-flex">
+        Open dashboard <i data-lucide="arrow-up-right" class="h-3.5 w-3.5"></i>
+      </a>
+
+      <button id="menu-toggle" class="grid h-9 w-9 place-items-center rounded-sm border border-[#d7dcd4] text-[#126b50] transition-colors hover:bg-[#f5f7f5] md:hidden" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobile-menu">
+        <i data-lucide="menu" class="h-[18px] w-[18px]"></i>
+      </button>
+    </nav>
+    <div id="mobile-menu" class="hidden border-t border-[#e5e8e4] bg-white px-5 pb-4 pt-2 md:hidden">
+      <div class="mx-auto flex max-w-7xl flex-col gap-1">
+        <a class="mobile-link rounded-sm px-3 py-2.5 text-sm text-[#525e57] hover:bg-[#f5f7f5]" href="#product">Platform</a>
+        <a class="mobile-link rounded-sm px-3 py-2.5 text-sm text-[#525e57] hover:bg-[#f5f7f5]" href="#features">Capabilities</a>
+        <a class="mobile-link rounded-sm px-3 py-2.5 text-sm text-[#525e57] hover:bg-[#f5f7f5]" href="#how-it-works">How it works</a>
+        <a class="mobile-link rounded-sm px-3 py-2.5 text-sm text-[#525e57] hover:bg-[#f5f7f5]" href="#temporal-rag">Temporal RAG</a>
+        <a class="mt-2 inline-flex items-center justify-center gap-2 rounded-sm bg-[#126b50] px-4 py-3 text-sm font-semibold text-white" href="index.html">Open dashboard <i data-lucide="arrow-up-right" class="h-4 w-4"></i></a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="top" class="relative isolate scroll-mt-20 overflow-hidden bg-[#fdfdfa]">
+      <div class="mx-auto grid max-w-7xl items-center gap-12 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[1fr_1fr] lg:gap-12 lg:py-14">
+        <div class="max-w-[560px]">
+          <p class="eyebrow flex items-center gap-2">
+            <span class="h-px w-7 bg-[#126b50]"></span>
+            Regulatory intelligence, redefined
+          </p>
+          <h1 class="mt-6 max-w-[560px] text-[clamp(2.2rem,3.7vw,3.2rem)] font-semibold leading-[1.04] tracking-[-.06em] text-[#101916]">
+            Understand regulations.<br> <span class="text-[#43836b]">Track changes.</span><br> Make informed decisions.
+          </h1>
+          <p class="mt-6 max-w-[440px] text-[15px] leading-7 text-[#626c67]">
+            Explore banking regulations. Compare amendments. Get answers backed by source documents.
+          </p>
+          <div class="mt-6 flex flex-wrap items-center gap-3">
+            <a href="index.html" class="inline-flex items-center gap-2 rounded-sm bg-[#126b50] px-5 py-3 text-[13px] font-semibold text-white transition-colors hover:bg-[#0e583f]">
+              Explore the dashboard <i data-lucide="arrow-right" class="h-4 w-4"></i>
+            </a>
+            <a href="#product" class="inline-flex items-center gap-2 rounded-sm border border-[#d8ded9] px-5 py-3 text-[13px] font-semibold text-[#31443d] transition-colors hover:border-[#9eaaa2] hover:bg-white">
+              See the platform <i data-lucide="move-down" class="h-3.5 w-3.5"></i>
+            </a>
+          </div>
+          <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-[#e5e8e4] pt-4 text-[11px] text-[#65706a]">
+            <span class="inline-flex items-center gap-2"><i data-lucide="file-check-2" class="h-3.5 w-3.5 text-[#43836b]"></i> Source-oriented answers</span>
+            <span class="inline-flex items-center gap-2"><i data-lucide="calendar-clock" class="h-3.5 w-3.5 text-[#43836b]"></i> Point-in-time exploration</span>
+          </div>
+        </div>
+
+        <div id="product" class="scroll-mt-24">
+          <div class="preview-window overflow-hidden rounded-sm">
+            <div class="flex items-center justify-between border-b border-[#e1e3dc] px-4 py-3 sm:px-5">
+              <div class="flex items-center gap-2.5">
+                <span class="grid h-7 w-7 place-items-center rounded-sm bg-[#e7f2eb] text-[#126b50]"><i data-lucide="file-search-2" class="h-4 w-4"></i></span>
+                <div>
+                  <p class="text-[11px] font-semibold text-[#283832]">Regulatory research</p>
+                  <p class="mt-0.5 text-[10px] text-[#89928b]">Illustrative interface · sample scenario</p>
+                </div>
+              </div>
+              <span class="border border-[#d9ded6] px-2 py-1 text-[9px] font-semibold uppercase tracking-[.08em] text-[#78847c]">Preview</span>
+            </div>
+
+            <div class="grid md:grid-cols-[minmax(0,1fr)_180px]">
+              <div class="min-w-0 p-4 sm:p-5">
+                <div class="flex items-center justify-between">
+                  <p class="preview-label">Research question</p>
+                  <span class="inline-flex items-center gap-1.5 text-[10px] text-[#7b867e]"><i data-lucide="calendar-days" class="h-3 w-3"></i> As of 19 Oct 2026</span>
+                </div>
+                <p class="mt-2.5 text-[13px] leading-5 text-[#293a34]">What changed in the applicable RBI direction, and when did it take effect?</p>
+
+                <div class="mt-5 border-t border-[#e5e7e0] pt-4">
+                  <div class="flex items-center gap-2">
+                    <span class="h-1.5 w-1.5 rounded-full bg-[#24775a]"></span>
+                    <p class="text-[11px] font-semibold text-[#315b47]">Answer with source context</p>
+                  </div>
+                  <p class="mt-2.5 text-[12px] leading-[1.75] text-[#58645e]">
+                    The selected amendment states that <span class="bg-[#f1ece5] px-1 text-[#8b6751] line-through decoration-[#a87b5b]">the specified provision</span>
+                    <span class="bg-[#e7f2eb] px-1 font-semibold text-[#126b50]">was deleted</span>. Check the cited direction and effective date for the applicable scope.
+                  </p>
+                  <div class="mt-3 flex items-start gap-2 border-l-2 border-[#9a744d] bg-[#f7f6f1] px-3 py-2.5">
+                    <i data-lucide="book-open-check" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#6b7b70]"></i>
+                    <div class="min-w-0">
+                      <p class="text-[11px] font-semibold text-[#3d4b44]">RBI Amendment Directions</p>
+                      <p class="mt-0.5 text-[10px] leading-4 text-[#89918a]">Source excerpt · verify against official publication</p>
+                    </div>
+                    <i data-lucide="external-link" class="ml-auto mt-0.5 h-3 w-3 shrink-0 text-[#8b948c]"></i>
+                  </div>
+                </div>
+              </div>
+
+              <aside class="border-t border-[#e1e3dc] bg-[#f7f8f6] p-4 md:border-l md:border-t-0">
+                <p class="preview-label">Research context</p>
+                <div class="mt-3 border-b border-[#e1e3dc] pb-3">
+                  <p class="text-[10px] text-[#89928b]">Document set</p>
+                  <p class="mt-1 text-[12px] font-semibold text-[#34443c]">RBI directions</p>
+                  <p class="mt-0.5 text-[10px] text-[#89928b]">Illustrative documents</p>
+                </div>
+                <div class="border-b border-[#e1e3dc] py-3">
+                  <p class="text-[10px] text-[#89928b]">Temporal filter</p>
+                  <p class="mt-1 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#34443c]"><i data-lucide="clock-3" class="h-3.5 w-3.5 text-[#24775a]"></i> Point in time</p>
+                  <p class="mt-0.5 text-[10px] text-[#89928b]">Compare versions by date</p>
+                </div>
+                <div class="pt-3">
+                  <p class="text-[10px] text-[#89928b]">Change signal</p>
+                  <p class="mt-1 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#34443c]"><i data-lucide="git-compare-arrows" class="h-3.5 w-3.5 text-[#24775a]"></i> Version comparison</p>
+                  <p class="mt-0.5 text-[10px] text-[#89928b]">Review source before action</p>
+                </div>
+              </aside>
+            </div>
+            <div class="flex items-start gap-2 border-t border-[#e1e3dc] px-4 py-2.5 text-[10px] leading-4 text-[#7e8981] sm:px-5">
+              <i data-lucide="info" class="mt-0.5 h-3 w-3 shrink-0"></i>
+              Sample interface only. Confirm obligations against official publications; this is not legal or compliance advice.
+            </div>
+            <div class="border-t border-[#e1e3dc] bg-[#fbfcfa] px-4 pb-3 pt-3 sm:px-5" role="img" aria-label="Illustrative timeline showing earlier wording, an amendment, and an as-of view">
+              <div class="mb-2 flex items-center justify-between">
+                <span class="preview-label">Illustrative version path</span>
+                <span class="text-[10px] text-[#89928b]">Earlier wording to as-of view</span>
+              </div>
+              <div class="relative mx-1 h-3">
+                <div class="absolute left-0 right-0 top-[5px] h-px bg-[#d8dfd9]"></div>
+                <div class="absolute left-0 top-[5px] h-px w-1/2 bg-[#43836b]"></div>
+                <span class="absolute left-0 top-[2px] h-[7px] w-[7px] rounded-full border border-white bg-[#43836b] ring-1 ring-[#43836b]/30"></span>
+                <span class="absolute left-1/2 top-[2px] h-[7px] w-[7px] -translate-x-1/2 rounded-full border border-white bg-[#9a744d] ring-1 ring-[#9a744d]/30"></span>
+                <span class="absolute right-0 top-[2px] h-[7px] w-[7px] rounded-full border border-white bg-[#8b9890] ring-1 ring-[#8b9890]/30"></span>
+                <span class="temporal-marker absolute top-[1px] z-10 h-[9px] w-[9px] -translate-x-1/2 rounded-full border-2 border-white bg-[#126b50] shadow-[0_0_0_2px_rgba(18,107,80,.18)]"></span>
+              </div>
+              <div class="mt-1 flex justify-between text-[10px] text-[#748078]">
+                <span>Earlier wording</span>
+                <span>Amendment</span>
+                <span>As-of view</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-y border-[#e5e8e4] bg-[#f7f8f6]">
+        <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-4 sm:px-8">
+          <span class="text-[10px] font-semibold uppercase tracking-[.1em] text-[#758078]">A workspace for regulatory research</span>
+          <span class="flex flex-wrap gap-x-6 gap-y-2 text-[11px] text-[#57625b]">
+            <span>Master Directions</span><span>Circulars & notifications</span><span>Amendment history</span><span>Source review</span>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="scroll-mt-24 bg-white py-20 sm:py-24">
+      <div class="mx-auto max-w-7xl px-5 sm:px-8">
+        <div class="grid gap-5 md:grid-cols-[.8fr_1.2fr] md:items-end">
+          <div>
+            <p class="eyebrow">Capabilities</p>
+            <h2 class="mt-3 max-w-lg text-3xl leading-tight tracking-[-.045em] text-[#101916] sm:text-[2.6rem]">A clearer way to work through complex rules.</h2>
+          </div>
+          <p class="max-w-xl text-sm leading-6 text-[#64736d] md:justify-self-end">Bring search, timelines and document context into one considered workflow for banking regulatory research.</p>
+        </div>
+
+        <div class="mt-10 grid border-y border-[#dedfd6] sm:grid-cols-2 lg:grid-cols-4">
+          <article class="border-b border-[#e5e8e4] py-6 sm:pr-6 lg:border-b-0 lg:border-r lg:pr-6">
+            <span class="flex h-8 w-8 items-center text-[#126b50]"><i data-lucide="search" class="h-[19px] w-[19px]"></i></span>
+            <h3 class="mt-4 text-[17px] tracking-[-.01em]">Regulatory Search</h3>
+            <p class="mt-2 text-[12px] leading-5 text-[#6c7972]">Explore RBI directions and circulars with focused questions and relevant document context.</p>
+          </article>
+          <article class="border-b border-[#e5e8e4] py-6 sm:pl-6 lg:border-b-0 lg:border-r lg:px-6">
+            <span class="flex h-8 w-8 items-center text-[#126b50]"><i data-lucide="calendar-range" class="h-[19px] w-[19px]"></i></span>
+            <h3 class="mt-4 text-[17px] tracking-[-.01em]">Temporal Analysis</h3>
+            <p class="mt-2 text-[12px] leading-5 text-[#6c7972]">Set an as-of date to frame research around the regulatory material available at that point in time.</p>
+          </article>
+          <article class="border-b border-[#e5e8e4] py-6 sm:py-6 sm:pr-6 lg:border-b-0 lg:border-r lg:px-6">
+            <span class="flex h-8 w-8 items-center text-[#126b50]"><i data-lucide="git-compare" class="h-[19px] w-[19px]"></i></span>
+            <h3 class="mt-4 text-[17px] tracking-[-.01em]">Amendment Tracking</h3>
+            <p class="mt-2 text-[12px] leading-5 text-[#6c7972]">Review version differences and change records to understand how specific provisions evolved.</p>
+          </article>
+          <article class="py-6 sm:pl-6 lg:pl-6">
+            <span class="flex h-8 w-8 items-center text-[#126b50]"><i data-lucide="badge-check" class="h-[19px] w-[19px]"></i></span>
+            <h3 class="mt-4 text-[17px] tracking-[-.01em]">Source-backed Answers</h3>
+            <p class="mt-2 text-[12px] leading-5 text-[#6c7972]">Keep cited document passages close to the answer, so reviewers can inspect the underlying text.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="scroll-mt-24 border-y border-[#e5e8e4] bg-[#f7f8f6] py-20 sm:py-24">
+      <div class="mx-auto max-w-7xl px-5 sm:px-8">
+        <div class="grid gap-5 md:grid-cols-[.8fr_1.2fr] md:items-end">
+          <div>
+            <p class="eyebrow">How it works</p>
+            <h2 class="mt-3 max-w-lg text-3xl leading-tight tracking-[-.025em] sm:text-[2.6rem]">From source document to informed review.</h2>
+          </div>
+          <p class="max-w-xl text-sm leading-6 text-[#64736d] md:justify-self-end">A practical flow for exploring regulatory material. The exact data available depends on the documents configured in the application.</p>
+        </div>
+        <div class="mt-11 grid border-t border-[#d5d8ce] sm:grid-cols-2 lg:grid-cols-4">
+          <article class="border-b border-[#d5d8ce] py-5 lg:border-b-0 lg:pr-7">
+            <p class="text-[10px] font-semibold tracking-[.12em] text-[#9a744d]">01 <span class="ml-2 text-[#879087]">COLLECT</span></p>
+            <h3 class="mt-3 text-xl">Ingest</h3>
+            <p class="mt-2 text-[12px] leading-5 text-[#6c7972]">Bring regulatory documents and their publication details into the working collection.</p>
+          </article>
+          <article class="border-b border-[#d5d8ce] py-5 sm:pl-6 lg:border-b-0 lg:border-l lg:px-6">
+            <p class="text-[10px] font-semibold tracking-[.12em] text-[#9a744d]">02 <span class="ml-2 text-[#879087]">ORGANIZE</span></p>
+            <h3 class="mt-3 text-xl">Index</h3>
+            <p class="mt-2 text-[12px] leading-5 text-[#6c7972]">Organize text and metadata so relevant passages can be found during research.</p>
+          </article>
+          <article class="border-b border-[#d5d8ce] py-5 lg:border-b-0 lg:border-l lg:px-6">
+            <p class="text-[10px] font-semibold tracking-[.12em] text-[#9a744d]">03 <span class="ml-2 text-[#879087]">COMPARE</span></p>
+            <h3 class="mt-3 text-xl">Detect changes</h3>
+            <p class="mt-2 text-[12px] leading-5 text-[#6c7972]">Compare available versions and review recorded amendments with their source context.</p>
+          </article>
+          <article class="py-5 sm:pl-6 lg:border-l lg:border-[#d5d8ce]">
+            <p class="text-[10px] font-semibold tracking-[.12em] text-[#9a744d]">04 <span class="ml-2 text-[#879087]">RESEARCH</span></p>
+            <h3 class="mt-3 text-xl">Ask</h3>
+            <p class="mt-2 text-[12px] leading-5 text-[#6c7972]">Explore a question, review the retrieved material and verify important conclusions.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="temporal-rag" class="scroll-mt-24 bg-white py-20 sm:py-24">
+      <div class="mx-auto grid max-w-7xl items-start gap-12 px-5 sm:px-8 lg:grid-cols-[.84fr_1.16fr] lg:gap-16">
+        <div>
+          <p class="eyebrow">A note on temporal RAG</p>
+          <h2 class="mt-3 text-3xl leading-tight tracking-[-.025em] sm:text-[2.6rem]">A regulation is more than its latest version.</h2>
+          <p class="mt-5 text-sm leading-7 text-[#64736d]">
+            Temporal Retrieval-Augmented Generation (Temporal RAG) brings a date-aware lens to document retrieval. Instead of considering only the newest text, a query can be explored against the versions relevant to a selected point in time.
+          </p>
+          <p class="mt-4 text-sm leading-7 text-[#64736d]">
+            For banking research, that can help frame questions such as what wording applied before an amendment, what the later text says, and which official document should be reviewed.
+          </p>
+          <a href="index.html" class="mt-6 inline-flex items-center gap-2 text-[13px] font-semibold text-[#31584d] transition-colors hover:text-[#173a35]">Explore a point-in-time query <i data-lucide="arrow-right" class="h-4 w-4"></i></a>
+        </div>
+
+        <div class="border border-[#dedfd6] bg-[#fffefa] p-5 sm:p-7">
+          <div class="flex flex-wrap items-start justify-between gap-3 border-b border-[#e5e5dd] pb-4">
+            <div>
+              <p class="eyebrow !text-[9px]">Illustrative version timeline</p>
+              <h3 class="mt-2 text-xl">A provision through time</h3>
+            </div>
+            <span class="text-[10px] text-[#818a81]">Example only</span>
+          </div>
+          <div class="mt-5">
+            <article class="grid grid-cols-[90px_1fr] gap-3 border-b border-[#e9e9e2] py-4 sm:grid-cols-[120px_1fr]">
+              <div>
+                <p class="text-[11px] font-semibold text-[#34453c]">Version A</p>
+                <p class="mt-1 text-[10px] text-[#899188]">Earlier publication</p>
+              </div>
+              <p class="border-l-2 border-[#9aab9e] pl-3 text-[11px] leading-5 text-[#68756d]">Earlier wording appears in the source document for this period. <span class="ml-1 text-[9px] font-semibold uppercase tracking-[.06em] text-[#718675]">Before</span></p>
+            </article>
+            <article class="grid grid-cols-[90px_1fr] gap-3 border-b border-[#e9e9e2] py-4 sm:grid-cols-[120px_1fr]">
+              <div>
+                <p class="text-[11px] font-semibold text-[#34453c]">Amendment</p>
+                <p class="mt-1 text-[10px] text-[#899188]">Notification date</p>
+              </div>
+              <p class="border-l-2 border-[#b39a79] pl-3 text-[11px] leading-5 text-[#68756d]">Review the amendment instrument and its commencement language; notification and effective dates may differ.</p>
+            </article>
+            <article class="grid grid-cols-[90px_1fr] gap-3 py-4 sm:grid-cols-[120px_1fr]">
+              <div>
+                <p class="text-[11px] font-semibold text-[#34453c]">Version B</p>
+                <p class="mt-1 text-[10px] text-[#899188]">Later publication</p>
+              </div>
+              <p class="border-l-2 border-[#55766a] pl-3 text-[11px] leading-5 text-[#68756d]">Updated wording can be compared with its earlier version. <span class="ml-1 text-[9px] font-semibold uppercase tracking-[.06em] text-[#55766a]">After</span></p>
+            </article>
+          </div>
+          <p class="mt-2 flex items-start gap-2 border-t border-[#e5e5dd] pt-4 text-[10px] leading-5 text-[#7e8981]"><i data-lucide="info" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#9a744d]"></i>Dates and operative effect should always be confirmed against the official instrument.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="px-5 pb-16 sm:px-8 sm:pb-20">
+      <div class="mx-auto flex max-w-7xl flex-col items-start justify-between gap-7 border-y border-[#e5e8e4] bg-[#f7f8f6] px-6 py-9 sm:flex-row sm:items-center sm:px-10 sm:py-11">
+        <div class="max-w-2xl">
+          <p class="eyebrow">ArthaOne dashboard</p>
+          <h2 class="mt-2 text-2xl leading-tight tracking-[-.02em] sm:text-[2rem]">Make the next regulatory question a clearer one.</h2>
+          <p class="mt-2 text-[13px] leading-6 text-[#64736d]">Explore the documents, versions and query workflow currently available.</p>
+        </div>
+        <a href="index.html" class="inline-flex shrink-0 items-center gap-2 rounded-sm bg-[#126b50] px-5 py-3 text-[13px] font-semibold text-white transition-colors hover:bg-[#0e583f]">Open dashboard <i data-lucide="arrow-up-right" class="h-4 w-4"></i></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-[#e5e8e4] bg-[#f7f8f6]">
+    <div class="mx-auto flex max-w-7xl flex-col gap-6 px-5 py-7 sm:px-8 md:flex-row md:items-center md:justify-between">
+      <a href="#top" class="flex items-center gap-2.5">
+        <span class="grid h-7 w-7 place-items-center rounded-sm bg-[#126b50] text-white"><i data-lucide="landmark" class="h-4 w-4"></i></span>
+        <span class="text-[14px] font-bold tracking-[-.04em] text-[#101916]">ArthaOne</span>
+      </a>
+      <div class="flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-[#64736d]">
+        <a class="quiet-link" href="#product">Platform</a>
+        <a class="quiet-link" href="#features">Capabilities</a>
+        <a class="quiet-link" href="#how-it-works">How it works</a>
+        <a class="quiet-link" href="#temporal-rag">Temporal RAG</a>
+        <a class="quiet-link" href="index.html">Dashboard</a>
+      </div>
+      <p class="max-w-sm text-[10px] leading-5 text-[#7e8981] md:text-right">For research support only. Always consult official RBI publications and your institution’s compliance or legal team for authoritative interpretation.</p>
+    </div>
+    <div class="border-t border-[#dedfd6] py-3 text-center text-[10px] text-[#818a81]">© <span id="year"></span> ArthaOne · Regulatory intelligence for banking research</div>
+  </footer>
+
+  <script>
+    const menuToggle = document.getElementById("menu-toggle");
+    const mobileMenu = document.getElementById("mobile-menu");
+
+    function setMenuOpen(isOpen) {
+      mobileMenu.classList.toggle("hidden", !isOpen);
+      menuToggle.setAttribute("aria-expanded", String(isOpen));
+      menuToggle.setAttribute("aria-label", isOpen ? "Close navigation menu" : "Open navigation menu");
+      menuToggle.innerHTML = `<i data-lucide="${isOpen ? "x" : "menu"}" class="h-[18px] w-[18px]"></i>`;
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    menuToggle.addEventListener("click", () => {
+      setMenuOpen(menuToggle.getAttribute("aria-expanded") !== "true");
+    });
+
+    document.querySelectorAll(".mobile-link").forEach((link) => {
+      link.addEventListener("click", () => setMenuOpen(false));
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && menuToggle.getAttribute("aria-expanded") === "true") {
+        setMenuOpen(false);
+        menuToggle.focus();
+      }
+    });
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+    if (window.lucide) window.lucide.createIcons();
+  </script>
+</body>
+</html>
