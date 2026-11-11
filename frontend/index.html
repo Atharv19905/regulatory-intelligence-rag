@@ -1,490 +1,2321 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RegIntel | Regulatory Intelligence & Compliance Platform</title>
-  <!-- Inline SVG Favicon (instant, no extra request) -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
-  
-  <!-- Fast Tailwind CDN with defer -->
+  <meta name="theme-color" content="#f7f9fc" />
+  <title>ArthaOne — Banking Intelligence Suite</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
   <style>
-    /* Instant Native System Fonts - Zero network render-blocking */
+    :root {
+      --ink: #17243a;
+      --muted: #718096;
+      --line: #e5eaf1;
+      --paper: #ffffff;
+      --canvas: #f5f7fb;
+      --navy: #132746;
+      --blue: #2563eb;
+      --blue-soft: #edf4ff;
+      --green: #15803d;
+      --amber: #a16207;
+      --red: #b91c1c;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      text-rendering: optimizeLegibility;
-      -webkit-font-smoothing: antialiased;
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     }
-    code, pre {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit
     }
-    .diff-del {
-      background-color: #fee2e2;
-      color: #991b1b;
-      text-decoration: line-through;
-      padding: 2px 4px;
-      border-radius: 3px;
+
+    button {
+      cursor: pointer
     }
-    .diff-add {
-      background-color: #dcfce7;
-      color: #166534;
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      background: #fff;
+      border-right: 1px solid var(--line);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 10px;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #1d4ed8, #0f2d55);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-size: 20px;
+      font-weight: 800;
+      box-shadow: 0 8px 18px #1d4ed822;
+    }
+
+    .brand-name {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+      color: #14233b;
+    }
+
+    .brand-sub {
+      font-size: 10px;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: #8b98aa;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .nav-label {
+      padding: 0 12px;
+      color: #9aa5b5;
+      font-size: 10px;
+      letter-spacing: 1.4px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .nav-list {
+      display: grid;
+      gap: 5px;
+    }
+
+    .nav-tab {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #64748b;
+      border-radius: 10px;
+      padding: 11px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      font-size: 13px;
       font-weight: 600;
-      padding: 2px 4px;
-      border-radius: 3px;
+      transition: .18s ease;
     }
-    .diff-mod {
-      background-color: #fef3c7;
-      color: #92400e;
-      padding: 2px 4px;
-      border-radius: 3px;
+
+    .nav-tab:hover {
+      background: #f4f7fc;
+      color: #18345c
     }
-    .svg-icon {
+
+    .nav-tab.active {
+      background: #edf4ff;
+      color: #1d4ed8;
+      box-shadow: inset 3px 0 #2563eb;
+    }
+
+    .nav-icon {
+      width: 20px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fafbfd;
+    }
+
+    .sidebar-bottom strong {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 4px
+    }
+
+    .sidebar-bottom p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.55
+    }
+
+    .main-area {
+      min-width: 0;
+    }
+
+    .topbar {
+      height: 70px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 34px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .crumb {
+      color: #8a96a8;
+      font-size: 12px
+    }
+
+    .crumb b {
+      color: #263852;
+      font-weight: 700
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px
+    }
+
+    .system-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 11px;
+      color: #526176;
+      background: #fff
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #94a3b8;
+      display: inline-block
+    }
+
+    .page-wrap {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 30px 34px 48px
+    }
+
+    .page-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 18px;
+      margin-bottom: 24px
+    }
+
+    .eyebrow {
+      color: #2563eb;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 800;
+      margin-bottom: 8px
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: -1px;
+      font-weight: 800;
+      color: #17243a
+    }
+
+    .subtitle {
+      margin: 7px 0 0;
+      color: #7b8798;
+      font-size: 13px;
+      line-height: 1.6;
+      max-width: 720px
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 3px 14px #152b4d08
+    }
+
+    .panel-head {
+      padding: 19px 21px;
+      border-bottom: 1px solid #edf0f5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 750;
+      color: #20314c
+    }
+
+    .panel-desc {
+      font-size: 11px;
+      color: #8995a6;
+      margin-top: 4px
+    }
+
+    .panel-body {
+      padding: 21px
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 20px
+    }
+
+    .kpi {
+      padding: 18px 19px;
+      min-height: 112px
+    }
+
+    .kpi-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #8190a4;
+      font-size: 11px;
+      font-weight: 650
+    }
+
+    .kpi-icon {
+      width: 31px;
+      height: 31px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: #eff5ff;
+      color: #2563eb;
+      font-size: 15px
+    }
+
+    .kpi-value {
+      font-size: 27px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-top: 9px;
+      color: #1b2c46
+    }
+
+    .kpi-note {
+      color: #98a2b1;
+      font-size: 10px;
+      margin-top: 1px
+    }
+
+    .hero {
+      background: linear-gradient(115deg, #10294c 0%, #173d70 62%, #23569a 100%);
+      color: white;
+      border-radius: 18px;
+      padding: 28px 30px;
+      margin-bottom: 19px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .hero:after {
+      content: "";
+      position: absolute;
+      width: 270px;
+      height: 270px;
+      border: 1px solid #ffffff18;
+      border-radius: 50%;
+      right: -65px;
+      top: -130px;
+      box-shadow: 0 0 0 35px #ffffff08, 0 0 0 75px #ffffff05;
+      pointer-events: none
+    }
+
+    .hero-kicker {
+      color: #b9d3ff;
+      font-size: 10px;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      font-weight: 800
+    }
+
+    .hero h2 {
+      color: #fff;
+      font-size: 24px;
+      letter-spacing: -.7px;
+      margin: 9px 0 7px;
+      font-weight: 800;
+      max-width: 650px
+    }
+
+    .hero p {
+      color: #d1def0;
+      font-size: 12px;
+      margin: 0;
+      line-height: 1.6;
+      max-width: 720px
+    }
+
+    .search-row {
+      margin-top: 20px;
+      display: flex;
+      gap: 9px;
+      max-width: 900px;
+      position: relative;
+      z-index: 1
+    }
+
+    .search-row input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #ffffff50;
+      background: #fff;
+      color: #1b2c46;
+      border-radius: 10px;
+      padding: 13px 15px;
+      font-size: 13px;
+      outline: none
+    }
+
+    .search-row input:focus,
+    .field:focus,
+    .date-field:focus {
+      border-color: #6ca2ff;
+      box-shadow: 0 0 0 3px #60a5fa2b
+    }
+
+    .primary-btn {
+      background: #2563eb;
+      color: #fff;
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 17px;
+      font-size: 12px;
+      font-weight: 750;
+      transition: .18s
+    }
+
+    .primary-btn:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px)
+    }
+
+    .hero .primary-btn {
+      background: #fff;
+      color: #1e4f93;
+      padding: 0 21px
+    }
+
+    .hero .primary-btn:hover {
+      background: #eaf2ff
+    }
+
+    .date-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      color: #c7d7ec;
+      font-size: 11px;
+      position: relative;
+      z-index: 1
+    }
+
+    .date-field,
+    .field,
+    select,
+    textarea {
+      border: 1px solid #dce3ed;
+      background: #fff;
+      border-radius: 9px;
+      padding: 9px 11px;
+      color: #263852;
+      font-size: 12px;
+      outline: none
+    }
+
+    .date-line input {
+      color: #253956;
+      padding: 5px 8px;
+      border-radius: 7px;
+      border: 0;
+      font-size: 11px
+    }
+
+    .prompt-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px
+    }
+
+    .prompt-card {
+      border: 1px solid #e5eaf1;
+      background: #fff;
+      border-radius: 11px;
+      padding: 13px;
+      text-align: left;
+      transition: .18s
+    }
+
+    .prompt-card:hover {
+      border-color: #9bbdf7;
+      background: #f8fbff;
+      transform: translateY(-2px)
+    }
+
+    .prompt-card span {
+      display: block;
+      color: #2563eb;
+      font-size: 10px;
+      font-weight: 800;
+      margin-bottom: 6px
+    }
+
+    .prompt-card strong {
+      display: block;
+      color: #34445d;
+      font-size: 11px;
+      line-height: 1.5;
+      font-weight: 650
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, .8fr);
+      gap: 18px
+    }
+
+    .table-wrap {
+      overflow: auto
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 11px;
+      min-width: 650px
+    }
+
+    th {
+      text-align: left;
+      background: #f8fafc;
+      color: #8390a2;
+      font-size: 9px;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      font-weight: 800;
+      padding: 12px 15px;
+      white-space: nowrap
+    }
+
+    td {
+      border-top: 1px solid #edf0f5;
+      padding: 13px 15px;
+      color: #536177;
+      vertical-align: top
+    }
+
+    td:first-child {
+      color: #263852;
+      font-weight: 700
+    }
+
+    .tag {
+      display: inline-flex;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eff5ff;
+      color: #2456a0;
+      font-size: 9px;
+      font-weight: 750
+    }
+
+    .text-link {
+      color: #2563eb;
+      font-size: 10px;
+      font-weight: 700;
+      text-decoration: none
+    }
+
+    .text-link:hover {
+      text-decoration: underline
+    }
+
+    .muted {
+      color: #8995a6
+    }
+
+    .empty {
+      padding: 24px;
+      text-align: center;
+      color: #8995a6;
+      font-size: 12px
+    }
+
+    .content-card {
+      padding: 22px
+    }
+
+    .content-card h2 {
+      font-size: 16px;
+      font-weight: 800;
+      margin: 0;
+      color: #1d2f49
+    }
+
+    .content-card .intro {
+      color: #8793a5;
+      font-size: 12px;
+      margin: 6px 0 18px;
+      line-height: 1.55
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch
+    }
+
+    .form-row textarea {
+      flex: 1;
+      resize: vertical;
+      min-height: 90px;
+      line-height: 1.5
+    }
+
+    .form-row button {
+      align-self: flex-end
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap
+    }
+
+    .toolbar .field {
+      min-width: 210px
+    }
+
+    .loading {
+      padding: 22px;
+      text-align: center;
+      color: #6b7a90;
+      font-size: 12px
+    }
+
+    .spinner {
+      width: 19px;
+      height: 19px;
+      border: 2px solid #dbeafe;
+      border-top-color: #2563eb;
+      border-radius: 50%;
       display: inline-block;
       vertical-align: middle;
-      flex-shrink: 0;
+      animation: spin .8s linear infinite;
+      margin-right: 8px
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .result-area {
+      margin-top: 18px
+    }
+
+    .result-area>div {
+      border-radius: 14px
+    }
+
+    .diff-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px
+    }
+
+    .diff-pane {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden
+    }
+
+    .diff-pane-head {
+      padding: 12px 14px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--line);
+      font-size: 11px;
+      font-weight: 750
+    }
+
+    .diff-pane-body {
+      padding: 16px;
+      font-size: 12px;
+      line-height: 1.7;
+      min-height: 140px
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 13px
+    }
+
+    .status-item {
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff
+    }
+
+    .status-item h3 {
+      font-size: 12px;
+      font-weight: 750;
+      margin: 0 0 8px
+    }
+
+    .status-item p {
+      margin: 4px 0;
+      color: #7d899b;
+      font-size: 11px;
+      line-height: 1.6
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 18px 34px;
+      color: #9aa4b2;
+      font-size: 10px;
+      background: #fff
+    }
+
+    @media(max-width:1050px) {
+      .app-shell {
+        grid-template-columns: 210px minmax(0, 1fr)
+      }
+
+      .page-wrap {
+        padding: 24px 22px
+      }
+
+      .topbar {
+        padding: 0 22px
+      }
+
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr)
+      }
+    }
+
+    @media(max-width:760px) {
+      .app-shell {
+        display: block
+      }
+
+      .sidebar {
+        padding: 12px;
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        gap: 12px
+      }
+
+      .brand {
+        padding: 0 5px
+      }
+
+      .brand-mark {
+        width: 34px;
+        height: 34px
+      }
+
+      .nav-label,
+      .sidebar-bottom {
+        display: none
+      }
+
+      .nav-list {
+        display: flex;
+        overflow-x: auto
+      }
+
+      .nav-tab {
+        width: auto;
+        white-space: nowrap;
+        padding: 9px 11px;
+        font-size: 11px
+      }
+
+      .topbar {
+        height: 48px;
+        position: static;
+        padding: 0 16px
+      }
+
+      .page-wrap {
+        padding: 22px 14px 35px
+      }
+
+      .page-heading {
+        align-items: flex-start;
+        flex-direction: column
+      }
+
+      h1 {
+        font-size: 24px
+      }
+
+      .hero {
+        padding: 22px 18px
+      }
+
+      .hero h2 {
+        font-size: 21px
+      }
+
+      .search-row {
+        flex-direction: column
+      }
+
+      .search-row .primary-btn {
+        padding: 12px
+      }
+
+      .prompt-grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .section-grid,
+      .diff-grid,
+      .status-grid {
+        grid-template-columns: 1fr
+      }
+
+      .kpi-grid {
+        gap: 9px
+      }
+
+      .kpi {
+        padding: 14px;
+        min-height: 100px
+      }
+
+      .kpi-value {
+        font-size: 23px
+      }
+
+      .panel-body,
+      .content-card {
+        padding: 15px
+      }
+
+      footer {
+        padding: 16px
+      }
+    }
+
+    @media(max-width:420px) {
+      .prompt-grid {
+        grid-template-columns: 1fr
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .system-pill {
+        font-size: 9px
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+
+      *,
+      *:before,
+      *:after {
+        scroll-behavior: auto !important;
+        animation: none !important;
+        transition: none !important
+      }
+    }
+
+    /* ArthaOne visual refresh */
+    :root {
+      --ink: #14243b;
+      --muted: #718096;
+      --line: #e7ecf3;
+      --canvas: #f4f7fb;
+      --navy: #10233f;
+      --blue: #2563eb;
+      --blue-soft: #edf4ff;
+      --green: #15803d;
+      --amber: #a16207;
+      --red: #b91c1c;
+    }
+
+    body {
+      background: linear-gradient(135deg, #f6f8fc 0%, #eef3fa 100%);
+      color: var(--ink);
+    }
+
+    .app-shell {
+      grid-template-columns: 264px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      background: rgba(255, 255, 255, .94);
+      backdrop-filter: blur(16px);
+      border-right: 1px solid #e4eaf2;
+      padding: 28px 18px;
+      gap: 32px;
+      box-shadow: 8px 0 30px rgba(25, 48, 82, .025);
+    }
+
+    .brand {
+      padding: 0 9px;
+      gap: 13px;
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      background: linear-gradient(145deg, #3478f6 0%, #102b52 100%);
+      box-shadow: 0 10px 24px rgba(37, 99, 235, .24);
+      font-size: 21px;
+    }
+
+    .brand-name {
+      font-size: 19px;
+      letter-spacing: -.7px;
+    }
+
+    .brand-sub {
+      font-size: 9px;
+      letter-spacing: 1.55px;
+    }
+
+    .nav-label {
+      margin-bottom: 12px;
+      color: #9aa8ba;
+    }
+
+    .nav-list {
+      gap: 7px;
+    }
+
+    .nav-tab {
+      padding: 12px 13px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      min-height: 44px;
+    }
+
+    .nav-tab.active {
+      background: linear-gradient(100deg, #eaf2ff, #f4f8ff);
+      color: #1d55c5;
+      box-shadow: inset 3px 0 #3478f6, 0 3px 10px rgba(37, 99, 235, .045);
+    }
+
+    .nav-tab:focus-visible,
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+      outline: 3px solid #93c5fd;
+      outline-offset: 2px;
+    }
+
+    .sidebar-bottom {
+      background: linear-gradient(145deg, #f8fbff, #f2f6fc);
+      border-color: #e5edf8;
+      padding: 16px;
+    }
+
+    .topbar {
+      height: 74px;
+      padding: 0 38px;
+      background: rgba(255, 255, 255, .9);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid #e8edf4;
+    }
+
+    .crumb {
+      font-size: 12px;
+    }
+
+    .system-pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #fbfcfe;
+      font-size: 10.5px;
+    }
+
+    .page-wrap {
+      max-width: 1560px;
+      padding: 34px 38px 54px;
+    }
+
+    .page-heading {
+      margin-bottom: 26px;
+    }
+
+    h1 {
+      font-size: 32px;
+      letter-spacing: -1.25px;
+    }
+
+    .eyebrow {
+      letter-spacing: 1.7px;
+      font-size: 9.5px;
+    }
+
+    .subtitle {
+      font-size: 13.5px;
+      max-width: 760px;
+      color: #738197;
+    }
+
+    .panel {
+      border: 1px solid #e7ecf3;
+      border-radius: 18px;
+      box-shadow: 0 7px 26px rgba(24, 48, 82, .045);
+      transition: box-shadow .2s ease, border-color .2s ease;
+    }
+
+    .panel:hover {
+      box-shadow: 0 10px 32px rgba(24, 48, 82, .065);
+    }
+
+    .panel-head {
+      padding: 20px 23px;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      letter-spacing: -.1px;
+    }
+
+    .panel-desc {
+      font-size: 11.5px;
+    }
+
+    .kpi-grid {
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .kpi {
+      padding: 20px 21px;
+      min-height: 126px;
+    }
+
+    .kpi-top {
+      font-size: 11.5px;
+      color: #77869b;
+    }
+
+    .kpi-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: #edf4ff;
+    }
+
+    .kpi-value {
+      font-size: 30px;
+      letter-spacing: -1.2px;
+    }
+
+    .hero {
+      background: radial-gradient(circle at 88% 10%, rgba(89, 153, 255, .34), transparent 28%),
+        linear-gradient(118deg, #10233f 0%, #173d70 58%, #245ba2 100%);
+      border-radius: 22px;
+      padding: 34px 34px 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 18px 40px rgba(16, 43, 79, .16);
+    }
+
+    .hero h2 {
+      font-size: 28px;
+      letter-spacing: -.9px;
+      max-width: 700px;
+    }
+
+    .hero p {
+      font-size: 13px;
+      max-width: 760px;
+    }
+
+    .search-row {
+      max-width: 940px;
+      margin-top: 23px;
+    }
+
+    .search-row input {
+      border: 1px solid rgba(255, 255, 255, .65);
+      border-radius: 12px;
+      padding: 15px 17px;
+      font-size: 13px;
+    }
+
+    .hero .primary-btn {
+      border-radius: 11px;
+      padding: 0 23px;
+      font-size: 12px;
+    }
+
+    .primary-btn {
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 12px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, .13);
+    }
+
+    .prompt-grid {
+      gap: 13px;
+      margin-top: 18px;
+    }
+
+    .prompt-card {
+      border: 1px solid #e6ebf3;
+      border-radius: 15px;
+      padding: 17px 16px;
+      box-shadow: 0 3px 12px rgba(24, 48, 82, .025);
+      min-height: 105px;
+    }
+
+    .prompt-card:hover {
+      border-color: #a8c6fb;
+      box-shadow: 0 8px 22px rgba(37, 99, 235, .08);
+    }
+
+    .prompt-card span {
+      font-size: 9px;
+      letter-spacing: .8px;
+    }
+
+    .prompt-card strong {
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    table {
+      font-size: 12px;
+    }
+
+    th {
+      font-size: 9px;
+      letter-spacing: 1px;
+      padding: 14px 16px;
+    }
+
+    td {
+      padding: 15px 16px;
+      font-size: 11.5px;
+    }
+
+    .content-card {
+      padding: 26px;
+    }
+
+    .content-card h2 {
+      font-size: 18px;
+      letter-spacing: -.3px;
+    }
+
+    .content-card .intro {
+      font-size: 12.5px;
+    }
+
+    .field,
+    .date-field,
+    select,
+    textarea {
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12.5px;
+    }
+
+    textarea {
+      line-height: 1.65;
+    }
+
+    .tag {
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 10px;
+    }
+
+    .status-item {
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 3px 12px rgba(24, 48, 82, .025);
+    }
+
+    footer {
+      padding: 20px 38px;
+      background: rgba(255, 255, 255, .9);
+    }
+
+    .result-area>div {
+      box-shadow: 0 8px 28px rgba(24, 48, 82, .05);
+    }
+
+    @media(max-width:1050px) {
+      .app-shell {
+        grid-template-columns: 220px minmax(0, 1fr);
+      }
+
+      .page-wrap {
+        padding: 28px 24px 44px;
+      }
+
+      .topbar {
+        padding: 0 24px;
+      }
+    }
+
+    @media(max-width:760px) {
+      .app-shell {
+        display: block;
+      }
+
+      .sidebar {
+        padding: 12px 13px;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+      }
+
+      .brand-name {
+        font-size: 16px;
+      }
+
+      .topbar {
+        height: auto;
+        min-height: 50px;
+        padding: 10px 15px;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .top-actions {
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .page-wrap {
+        padding: 22px 14px 36px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      .hero {
+        padding: 25px 19px;
+        border-radius: 18px;
+      }
+
+      .hero h2 {
+        font-size: 23px;
+      }
+
+      .prompt-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .panel-head {
+        padding: 16px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .content-card {
+        padding: 18px;
+      }
+
+      footer {
+        padding: 16px;
+      }
+    }
+
+    @media(max-width:420px) {
+      .prompt-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .top-actions .system-pill:nth-child(2) {
+        display: none;
+      }
+
+      .hero h2 {
+        font-size: 21px;
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+
+      *,
+      *:before,
+      *:after {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+
+
+
+    /* ARTHAONE — complete visual direction: editorial banking workspace */
+    :root {
+      --ink: #15243a;
+      --muted: #718096;
+      --line: #e3e9f1;
+      --paper: #ffffff;
+      --canvas: #f2f5f9;
+      --navy: #101f35;
+      --blue: #2463eb;
+      --blue-soft: #eaf1ff;
+      --green: #16845b;
+      --amber: #a86a12;
+      --red: #bf3f4b;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: #f2f5f9;
+      color: #15243a;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    .app-shell {
+      grid-template-columns: 272px minmax(0, 1fr);
+      background: #f2f5f9;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 28px 18px 22px;
+      background: linear-gradient(165deg, #10233d 0%, #132d4d 55%, #0d1d32 100%);
+      border: 0;
+      color: #eaf1fb;
+      gap: 34px;
+      box-shadow: 12px 0 35px rgba(17, 35, 59, .08);
+    }
+
+    .brand {
+      padding: 0 10px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, .12);
+      gap: 13px;
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      background: linear-gradient(145deg, #68d5c0, #228b91);
+      color: #08243a;
+      font-size: 22px;
+      box-shadow: 0 9px 24px #0003;
+    }
+
+    .brand-name {
+      color: #fff;
+      font-size: 19px;
+      letter-spacing: -.7px;
+      font-weight: 850;
+    }
+
+    .brand-sub {
+      color: #a9bfd6;
+      font-size: 9px;
+      letter-spacing: 1.6px;
+    }
+
+    .nav-label {
+      color: #7f9ab6;
+      padding: 0 13px 8px;
+      font-size: 9px;
+      letter-spacing: 1.8px;
+    }
+
+    .nav-list {
+      gap: 7px;
+    }
+
+    .nav-tab {
+      color: #b7c8da;
+      border-radius: 12px;
+      padding: 12px 13px;
+      font-size: 12.5px;
+      font-weight: 600;
+      transition: background .2s, color .2s, transform .2s;
+    }
+
+    .nav-tab:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, .09);
+      transform: translateX(2px);
+    }
+
+    .nav-tab.active {
+      color: #fff;
+      background: linear-gradient(90deg, rgba(76, 198, 183, .22), rgba(76, 198, 183, .08));
+      box-shadow: inset 3px 0 #61d0bd;
+    }
+
+    .nav-icon {
+      color: #79d4c5;
+      width: 22px;
+      font-size: 17px;
+    }
+
+    .sidebar-bottom {
+      background: rgba(255, 255, 255, .07);
+      border: 1px solid rgba(255, 255, 255, .13);
+      border-radius: 15px;
+      padding: 15px;
+    }
+
+    .sidebar-bottom strong {
+      color: #eaf4ff;
+      font-size: 11px;
+      letter-spacing: .2px;
+    }
+
+    .sidebar-bottom p {
+      color: #a9bfd2;
+      font-size: 10.5px;
+      line-height: 1.65;
+    }
+
+    .main-area {
+      min-width: 0;
+    }
+
+    .topbar {
+      height: 76px;
+      padding: 0 clamp(20px, 3.2vw, 48px);
+      background: rgba(255, 255, 255, .9);
+      border-bottom: 1px solid #e5eaf1;
+      backdrop-filter: blur(16px);
+    }
+
+    .crumb {
+      color: #8a98aa;
+      font-size: 11px;
+      letter-spacing: .2px;
+    }
+
+    .crumb b {
+      color: #203653;
+    }
+
+    .system-pill {
+      border: 1px solid #e2e9f1;
+      background: #fff;
+      border-radius: 9px;
+      padding: 8px 11px;
+      font-size: 10.5px;
+      color: #5c6d81;
+    }
+
+    .dot {
+      background: #24a77b;
+      box-shadow: 0 0 0 3px #24a77b20;
+    }
+
+    .page-wrap {
+      max-width: 1580px;
+      padding: 34px clamp(20px, 3.2vw, 48px) 54px;
+    }
+
+    .page-heading {
+      align-items: flex-end;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      color: #168b86;
+      font-size: 10px;
+      letter-spacing: 1.7px;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 9px;
+    }
+
+    h1 {
+      color: #152b46;
+      font-size: clamp(27px, 3vw, 36px);
+      font-weight: 800;
+      letter-spacing: -1.25px;
+      line-height: 1.12;
+    }
+
+    .subtitle {
+      color: #728198;
+      font-size: 13px;
+      line-height: 1.7;
+      max-width: 720px;
+      margin-top: 9px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 34px 38px;
+      border-radius: 22px;
+      background: linear-gradient(112deg, #102a49 0%, #174568 54%, #167d83 100%);
+      box-shadow: 0 18px 42px rgba(16, 52, 81, .17);
+    }
+
+    .hero:before {
+      content: "";
+      position: absolute;
+      width: 330px;
+      height: 330px;
+      border: 1px solid rgba(255, 255, 255, .13);
+      border-radius: 50%;
+      right: -90px;
+      top: -170px;
+      box-shadow: 0 0 0 32px rgba(255, 255, 255, .035), 0 0 0 68px rgba(255, 255, 255, .025);
+      pointer-events: none;
+    }
+
+    .hero:after {
+      content: "";
+      position: absolute;
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      background: #6fe0c51c;
+      right: 18%;
+      bottom: -145px;
+      filter: blur(2px);
+      pointer-events: none;
+    }
+
+    .hero>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-kicker {
+      color: #9ce6d8;
+      font-size: 9px;
+      letter-spacing: 2px;
+      font-weight: 800;
+    }
+
+    .hero h2 {
+      color: #fff;
+      font-size: clamp(24px, 3vw, 34px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin: 11px 0 9px;
+    }
+
+    .hero p {
+      color: #c4d9e7;
+      font-size: 12.5px;
+      line-height: 1.7;
+      max-width: 680px;
+    }
+
+    .search-row {
+      max-width: 850px;
+      margin-top: 22px;
+      gap: 10px;
+    }
+
+    .search-row input {
+      min-height: 49px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 11px;
+      background: #fff;
+      color: #1b2b40;
+      padding: 0 16px;
+      box-shadow: 0 6px 20px #061b3033;
+    }
+
+    .search-row input:focus {
+      outline: 3px solid #83e2d355;
+      border-color: #a3e8dc;
+    }
+
+    .primary-btn {
+      border: 0;
+      border-radius: 10px;
+      background: #73ddc6;
+      color: #10344a;
+      padding: 12px 18px;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 7px 18px #061b3028;
+      transition: transform .18s, filter .18s;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+
+    .date-line {
+      color: #c4d9e7;
+      font-size: 10.5px;
+      margin-top: 13px;
+    }
+
+    .date-line input {
+      border: 1px solid #ffffff40;
+      background: #ffffff14;
+      color: #fff;
+      border-radius: 7px;
+      padding: 5px 8px;
+      margin-left: 7px;
+    }
+
+    .prompt-grid {
+      gap: 13px;
+      margin: 20px 0 25px;
+    }
+
+    .prompt-card {
+      background: #fff;
+      border: 1px solid #e3eaf2;
+      border-radius: 15px;
+      padding: 17px 18px;
+      text-align: left;
+      box-shadow: 0 5px 16px rgba(25, 48, 76, .035);
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+    }
+
+    .prompt-card:hover {
+      transform: translateY(-3px);
+      border-color: #9cc9d8;
+      box-shadow: 0 12px 25px rgba(25, 48, 76, .08);
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #e4eaf1;
+      border-radius: 17px;
+      box-shadow: 0 7px 22px rgba(25, 48, 76, .035);
+    }
+
+    .kpi-grid {
+      gap: 14px;
+    }
+
+    .kpi {
+      padding: 19px 20px;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi:after {
+      content: "";
+      position: absolute;
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      right: -32px;
+      top: -32px;
+      background: #e8f5f4;
+    }
+
+    .kpi-top {
+      color: #7c8a9c;
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    .kpi-icon {
+      color: #178b85;
+      background: #e8f6f3;
+      border-radius: 9px;
+      padding: 7px;
+    }
+
+    .kpi-value {
+      color: #18324f;
+      font-size: 29px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-top: 13px;
+    }
+
+    .kpi-note {
+      color: #8a97a8;
+      font-size: 10px;
+      margin-top: 3px;
+    }
+
+    .panel-head {
+      padding: 20px 22px;
+      border-bottom: 1px solid #edf0f4;
+    }
+
+    .panel-title {
+      color: #1d3450;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .panel-desc {
+      color: #8794a5;
+      font-size: 10.5px;
+      margin-top: 4px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      color: #8391a3;
+      background: #f8fafc;
+      font-size: 9px;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    td {
+      color: #52647a;
+      font-size: 11px;
+    }
+
+    th,
+    td {
+      padding: 13px 16px;
+      border-bottom: 1px solid #edf1f5;
+      text-align: left;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .content-card {
+      padding: 25px;
+      border-radius: 17px;
+    }
+
+    input,
+    textarea,
+    select {
+      border-color: #dce4ed !important;
+      border-radius: 9px !important;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: 3px solid #2caaa51c !important;
+      border-color: #45aaa5 !important;
+    }
+
+    .text-link {
+      color: #187f83;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .text-link:hover {
+      color: #105a67;
+      text-decoration: underline;
+    }
+
+    .result-area {
+      border-radius: 14px;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+      outline: 3px solid #48b8ad !important;
+      outline-offset: 2px;
+    }
+
+    footer {
+      color: #8794a5;
+      font-size: 10px;
+    }
+
+    @media(max-width:900px) {
+      .app-shell {
+        grid-template-columns: 220px minmax(0, 1fr);
+      }
+
+      .sidebar {
+        padding-left: 13px;
+        padding-right: 13px;
+      }
+
+      .topbar {
+        padding: 0 20px;
+      }
+    }
+
+    @media(max-width:760px) {
+      .app-shell {
+        display: block;
+      }
+
+      .sidebar {
+        position: relative;
+        height: auto;
+        overflow: visible;
+        padding: 15px;
+        gap: 14px;
+      }
+
+      .brand {
+        padding: 0 5px 13px;
+      }
+
+      .nav-list {
+        display: flex;
+        overflow-x: auto;
+        padding: 2px 0 6px;
+        gap: 6px;
+      }
+
+      .nav-tab {
+        flex: 0 0 auto;
+        width: auto;
+        white-space: nowrap;
+        padding: 10px 12px;
+      }
+
+      .nav-tab.active {
+        box-shadow: inset 0 -3px #61d0bd;
+      }
+
+      .sidebar-bottom {
+        display: none;
+      }
+
+      .topbar {
+        position: relative;
+        height: auto;
+        min-height: 58px;
+        padding: 11px 15px;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .top-actions {
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .page-wrap {
+        padding: 22px 14px 36px;
+      }
+
+      .page-heading {
+        align-items: flex-start;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .hero {
+        padding: 26px 20px;
+        border-radius: 17px;
+      }
+
+      .search-row {
+        flex-wrap: wrap;
+      }
+
+      .search-row input {
+        min-width: 100%;
+      }
+
+      .search-row button {
+        width: 100%;
+      }
+
+      .prompt-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .content-card {
+        padding: 18px;
+      }
+    }
+
+    @media(max-width:440px) {
+      .prompt-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .top-actions .system-pill:nth-child(2) {
+        display: none;
+      }
+
+      .hero h2 {
+        font-size: 23px;
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *:before,
+      *:after {
+        transition: none !important;
+        animation: none !important;
+      }
     }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- TOP NAVIGATION HEADER -->
-  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-50 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="bg-indigo-600 p-2 rounded-lg flex items-center justify-center shadow-inner text-white">
-          <span data-icon="shield-check" class="w-6 h-6"></span>
-        </div>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">A</div>
         <div>
-          <div class="flex items-center space-x-2">
-            <span class="font-bold text-lg tracking-tight text-white">RegIntel</span>
-            <span class="text-xs bg-indigo-500/30 text-indigo-300 font-mono px-2 py-0.5 rounded border border-indigo-400/30">RBI & Financial Directives</span>
-          </div>
-          <p class="text-xs text-slate-400">Temporal Compliance & Regulatory Intelligence Engine</p>
+          <div class="brand-name">ArthaOne</div>
+          <div class="brand-sub">Banking intelligence suite</div>
         </div>
       </div>
-
-      <!-- Quick Metrics & Status -->
-      <div class="hidden md:flex items-center space-x-6 text-xs">
-        <div class="flex items-center space-x-2">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span class="text-slate-300">Database:</span>
-          <span id="header-doc-count" class="font-semibold text-emerald-400 font-mono">9 Documents</span>
-        </div>
-        <div class="flex items-center space-x-2 border-l border-slate-700 pl-4">
-          <span data-icon="database" class="w-3.5 h-3.5 text-slate-400"></span>
-          <span class="text-slate-300">Qdrant Vector DB:</span>
-          <span class="font-semibold text-slate-200 font-mono">regulatory_chunks</span>
-        </div>
-        <div class="flex items-center space-x-2 border-l border-slate-700 pl-4">
-          <span data-icon="cpu" class="w-3.5 h-3.5 text-slate-400"></span>
-          <span class="text-slate-300">Model:</span>
-          <span class="font-semibold text-indigo-300 font-mono">Gemini 3.6 / Groq</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- SUB-NAV / TABS -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 border-t border-slate-800 text-sm overflow-x-auto">
-      <button onclick="switchTab('ask')" id="tab-btn-ask" class="tab-btn px-4 py-3 font-medium border-b-2 border-indigo-500 text-white flex items-center space-x-2">
-        <span data-icon="message-square" class="w-4 h-4"></span>
-        <span>Regulatory AI Assistant</span>
-      </button>
-      <button onclick="switchTab('diff')" id="tab-btn-diff" class="tab-btn px-4 py-3 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
-        <span data-icon="git-compare" class="w-4 h-4"></span>
-        <span>Version Diff & Amendments</span>
-      </button>
-      <button onclick="switchTab('repository')" id="tab-btn-repository" class="tab-btn px-4 py-3 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
-        <span data-icon="file-text" class="w-4 h-4"></span>
-        <span>Master Directions Repository</span>
-      </button>
-      <button onclick="switchTab('audit')" id="tab-btn-audit" class="tab-btn px-4 py-3 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
-        <span data-icon="clipboard-list" class="w-4 h-4"></span>
-        <span>Change Events & Audit Trail</span>
-      </button>
-      <button onclick="switchTab('architecture')" id="tab-btn-architecture" class="tab-btn px-4 py-3 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
-        <span data-icon="layers" class="w-4 h-4"></span>
-        <span>Pipeline Architecture</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- MAIN CONTAINER -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
-
-    <!-- ========================================== -->
-    <!-- TAB 1: REGULATORY AI ASSISTANT (TEMPORAL RAG) -->
-    <!-- ========================================== -->
-    <section id="tab-ask" class="space-y-6">
-      
-      <!-- Temporal & Search Control Card -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div>
-            <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
-              <span data-icon="search" class="w-5 h-5 text-indigo-600"></span>
-              <span>Temporal Regulatory Query</span>
-            </h2>
-            <p class="text-xs text-slate-500 mt-1">
-              Ask compliance questions with point-in-time regulatory cutoff date filtering.
-            </p>
-          </div>
-
-          <!-- As of Date (Point-in-time compliance picker) -->
-          <div class="flex items-center space-x-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-            <div class="flex items-center space-x-1.5 text-xs font-medium text-slate-700">
-              <span data-icon="calendar" class="w-4 h-4 text-indigo-600"></span>
-              <span>As-of Cutoff Date:</span>
-            </div>
-            <input 
-              type="date" 
-              id="cutoff-date" 
-              class="text-xs bg-white border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
-              value=""
-            />
-            <button 
-              type="button"
-              onclick="clearCutoffDate()" 
-              class="text-xs text-slate-500 hover:text-slate-800 underline px-1"
-              title="Reset cutoff date to query all latest rules">
-              Latest (Today)
-            </button>
-          </div>
-        </div>
-
-        <!-- Query Input Form -->
-        <form onsubmit="handleQuerySubmit(event)" class="space-y-3">
-          <div class="relative">
-            <input 
-              type="text" 
-              id="query-input"
-              placeholder="e.g. What happened to paragraph 37 of the Small Finance Banks Directions?"
-              class="w-full text-sm pl-4 pr-32 py-3.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-inner"
-              required
-            />
-            <button 
-              type="submit" 
-              id="submit-btn"
-              class="absolute right-2 top-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-md flex items-center space-x-1.5 shadow transition-colors">
-              <span data-icon="sparkles" class="w-3.5 h-3.5"></span>
-              <span>Ask Engine</span>
-            </button>
-          </div>
-
-          <!-- Preset Prompt Pills -->
-          <div class="flex flex-wrap items-center gap-2 text-xs">
-            <span class="text-slate-400 font-medium">Quick Prompts:</span>
-            <button 
-              type="button"
-              onclick="setPrompt('What happened to paragraph 37 of the Small Finance Banks Directions?', '2026-10-25')"
-              class="bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 px-3 py-1 rounded-full border border-slate-200 transition-colors">
-              ⚡ SFB Para 37 Deletion (Oct 2026)
-            </button>
-            <button 
-              type="button"
-              onclick="setPrompt('What happened to paragraph 37 of the Small Finance Banks Directions?', '2026-10-10')"
-              class="bg-amber-50 hover:bg-amber-100 text-amber-800 px-3 py-1 rounded-full border border-amber-200 transition-colors">
-              ⏳ SFB Para 37 (Before Amendment: Cutoff Oct 10)
-            </button>
-            <button 
-              type="button"
-              onclick="setPrompt('What are the latest updates to the UN Sanctions List under UAPA Section 51A?')"
-              class="bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 px-3 py-1 rounded-full border border-slate-200 transition-colors">
-              🛡️ Sanctions List 3 Entries (UAPA 51A)
-            </button>
-            <button 
-              type="button"
-              onclick="setPrompt('What was the Monetary Policy Committee repo rate decision?')"
-              class="bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 px-3 py-1 rounded-full border border-slate-200 transition-colors">
-              📈 MPC Meeting Minutes
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Loading State -->
-      <div id="query-loading" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center space-y-3">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
-        <p class="text-sm font-semibold text-slate-700">Searching regulatory documents & verifying citations...</p>
-        <p class="text-xs text-slate-400 font-mono">Running Qdrant vector retrieval, date filtering, and grounding checks</p>
-      </div>
-
-      <!-- Results Display Section -->
-      <div id="query-result-container" class="space-y-6">
-        <!-- Filled by JS -->
-      </div>
-    </section>
-
-    <!-- ========================================== -->
-    <!-- TAB 2: VERSION DIFF & AMENDMENTS -->
-    <!-- ========================================== -->
-    <section id="tab-diff" class="hidden space-y-6">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div>
-            <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
-              <span data-icon="git-commit" class="w-5 h-5 text-indigo-600"></span>
-              <span>Regulatory Version Comparison</span>
-            </h2>
-            <p class="text-xs text-slate-500 mt-1">
-              Side-by-side textual diff of RBI directions, amendments, and candidate deletions.
-            </p>
-          </div>
-
-          <!-- Comparison Selection Preset -->
-          <div class="flex items-center space-x-2 text-xs">
-            <label class="font-medium text-slate-600">Select Directives Diff:</label>
-            <select id="diff-selector" onchange="renderDiffSelection()" class="bg-slate-50 border border-slate-300 rounded px-3 py-1.5 font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              <option value="sfb-para37">RBI SFB Directions: Para 37 (Consolidated vs Amendment 13741)</option>
-              <option value="sanctions-uapa">UNSC 1267/1989 Sanctions: Entry QDi.082 & QDe.132</option>
-              <option value="commercial-banks">Commercial Banks: Miscellaneous Directions Amendment 2026</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Diff Summary Alert Box -->
-        <div id="diff-status-box" class="p-4 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start space-x-3">
-          <span data-icon="alert-triangle" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></span>
-          <div>
-            <span class="font-bold">Candidate Deletion Detected:</span>
-            <span id="diff-status-text">
-              Official amendment confirmed deletion of Chapter IV Section C (paragraph 37). The historical paragraph text has been checked against secondary source archives and marked for audit.
-            </span>
-          </div>
-        </div>
-
-        <!-- Split / Side-by-Side Diff View -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Left: Baseline / Prior Version -->
-          <div class="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
-            <div class="bg-slate-100 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center text-xs">
-              <div class="flex items-center space-x-2">
-                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                <span class="font-bold text-slate-700">Baseline Regulation (Prior Version)</span>
-              </div>
-              <span id="diff-baseline-badge" class="font-mono text-slate-500">204MD.pdf</span>
-            </div>
-            <div id="diff-baseline-content" class="p-4 text-xs leading-relaxed text-slate-700 space-y-3 font-mono bg-rose-50/20">
-              <!-- Content filled by JS -->
-            </div>
-          </div>
-
-          <!-- Right: Amended Version -->
-          <div class="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
-            <div class="bg-slate-100 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center text-xs">
-              <div class="flex items-center space-x-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span class="font-bold text-slate-700">Amended Regulation (Gazetted Version)</span>
-              </div>
-              <span id="diff-amended-badge" class="font-mono text-slate-500">Notification Id: 13741</span>
-            </div>
-            <div id="diff-amended-content" class="p-4 text-xs leading-relaxed text-slate-700 space-y-3 font-mono bg-emerald-50/20">
-              <!-- Content filled by JS -->
-            </div>
-          </div>
-        </div>
-
-        <!-- Operative Amendment Evidence Box -->
-        <div class="border border-indigo-100 bg-indigo-50/40 rounded-lg p-4 space-y-2 text-xs">
-          <div class="flex items-center space-x-2 font-semibold text-indigo-900">
-            <span data-icon="file-check-2" class="w-4 h-4 text-indigo-600"></span>
-            <span>Official Amendment Clause & Evidence Extract:</span>
-          </div>
-          <pre id="diff-evidence-text" class="bg-white p-3 rounded border border-indigo-200 text-slate-800 text-xs overflow-x-auto whitespace-pre-wrap">
-(ii) The amended instructions shall come into effect immediately upon issuance. 
-4. Section C on "Limits for Non-Option Derivative Contracts" of Chapter IV of the 
-Reserve Bank of India (Small Finance Banks - Miscellaneous) Directions, 2025 
-(paragraph 37 of the Directions) stands deleted.
-          </pre>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========================================== -->
-    <!-- TAB 3: MASTER DIRECTIONS REPOSITORY -->
-    <!-- ========================================== -->
-    <section id="tab-repository" class="hidden space-y-6">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div>
-            <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
-              <span data-icon="library" class="w-5 h-5 text-indigo-600"></span>
-              <span>Registered Directives & Circulars</span>
-            </h2>
-            <p class="text-xs text-slate-500 mt-1">
-              Synchronized records from SQLite (<code class="text-indigo-600">data/regulatory.db</code>) with cryptographic hashes.
-            </p>
-          </div>
-
-          <!-- Search filter -->
-          <div class="flex items-center space-x-2">
-            <input 
-              type="text" 
-              id="doc-filter-input"
-              onkeyup="filterDocumentsTable()" 
-              placeholder="Search title, regulator, or ID..."
-              class="text-xs bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64"
-            />
-          </div>
-        </div>
-
-        <!-- Table of Documents -->
-        <div class="overflow-x-auto border border-slate-200 rounded-lg">
-          <table class="min-w-full divide-y divide-slate-200 text-left text-xs" id="documents-table">
-            <thead class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider">
-              <tr>
-                <th class="px-4 py-3">Doc ID</th>
-                <th class="px-4 py-3">Regulator</th>
-                <th class="px-4 py-3">Title & Directive Name</th>
-                <th class="px-4 py-3">Published</th>
-                <th class="px-4 py-3">Effective</th>
-                <th class="px-4 py-3">Versions</th>
-                <th class="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="documents-tbody" class="divide-y divide-slate-100 font-normal text-slate-700 bg-white">
-              <!-- Populated by JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========================================== -->
-    <!-- TAB 4: CHANGE EVENTS & AUDIT TRAIL -->
-    <!-- ========================================== -->
-    <section id="tab-audit" class="hidden space-y-6">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
-        <div class="border-b border-slate-100 pb-4">
-          <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
-            <span data-icon="clipboard-check" class="w-5 h-5 text-indigo-600"></span>
-            <span>Regulatory Change Events & Audit Log</span>
-          </h2>
-          <p class="text-xs text-slate-500 mt-1">
-            Tracked modifications, clause deletions, and sanctions alterations with explicit provenance status.
-          </p>
-        </div>
-
-        <!-- Change events list -->
-        <div id="change-events-container" class="space-y-4">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-    </section>
-
-    <!-- ========================================== -->
-    <!-- TAB 5: PIPELINE ARCHITECTURE -->
-    <!-- ========================================== -->
-    <section id="tab-architecture" class="hidden space-y-6">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
-        <div class="border-b border-slate-100 pb-4">
-          <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
-            <span data-icon="network" class="w-5 h-5 text-indigo-600"></span>
-            <span>System Pipeline & Ingestion Architecture</span>
-          </h2>
-          <p class="text-xs text-slate-500 mt-1">
-            How documents flow from RBI portals into temporal vector retrieval and grounded generation.
-          </p>
-        </div>
-
-        <!-- Workflow cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="border border-slate-200 rounded-lg p-4 bg-slate-50 space-y-2">
-            <div class="flex items-center space-x-2 text-indigo-600 font-bold text-xs">
-              <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-mono">1</span>
-              <span>Discovery & Registration</span>
-            </div>
-            <p class="text-xs text-slate-600">
-              Scrapes RBI listing tables, computes SHA-256 digests, deduplicates, and logs to SQLite (<code class="text-indigo-600 font-semibold">metadata_db.py</code>).
-            </p>
-          </div>
-
-          <div class="border border-slate-200 rounded-lg p-4 bg-slate-50 space-y-2">
-            <div class="flex items-center space-x-2 text-indigo-600 font-bold text-xs">
-              <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-mono">2</span>
-              <span>Extraction & Chunking</span>
-            </div>
-            <p class="text-xs text-slate-600">
-              PyMuPDF extracts text while strictly preserving page numbers. Embeds chunks with <code class="text-indigo-600 font-semibold">all-MiniLM-L6-v2</code> into Qdrant.
-            </p>
-          </div>
-
-          <div class="border border-slate-200 rounded-lg p-4 bg-slate-50 space-y-2">
-            <div class="flex items-center space-x-2 text-indigo-600 font-bold text-xs">
-              <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-mono">3</span>
-              <span>Temporal RAG & Verification</span>
-            </div>
-            <p class="text-xs text-slate-600">
-              Applies <code class="text-indigo-600 font-semibold">as_of_date</code> filtering, identifies candidate deletions, validates quotes on original PDF pages, and verifies LLM grounding.
-            </p>
-          </div>
-        </div>
-
-        <!-- Tech Stack Badges -->
-        <div class="pt-4 border-t border-slate-100">
-          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Core Technology Components</h3>
-          <div class="flex flex-wrap gap-2 text-xs">
-            <span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded border border-slate-200 font-mono">Python 3.12</span>
-            <span class="px-2.5 py-1 bg-blue-50 text-blue-700 rounded border border-blue-200 font-mono">SQLite (regulatory.db)</span>
-            <span class="px-2.5 py-1 bg-red-50 text-red-700 rounded border border-red-200 font-mono">Qdrant Vector Database</span>
-            <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 font-mono">PyMuPDF / PyMuPDF4LLM</span>
-            <span class="px-2.5 py-1 bg-purple-50 text-purple-700 rounded border border-purple-200 font-mono">SentenceTransformers</span>
-            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded border border-indigo-200 font-mono">Gemini 3.6 / Groq LLMs</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- FOOTER -->
-  <footer class="bg-white border-t border-slate-200 text-slate-500 py-4 text-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-2">
       <div>
-        <span>Regulatory Intelligence Platform — </span>
-        <span class="font-mono">Reserve Bank of India Compliance Suite</span>
+        <div class="nav-label">Workspace</div>
+        <nav class="nav-list" aria-label="Main navigation">
+          <button id="nav-dashboard" class="nav-tab active" onclick="switchTab('dashboard')"><span
+              class="nav-icon">▦</span>Overview</button>
+          <button id="nav-ask" class="nav-tab" onclick="switchTab('ask')"><span class="nav-icon">✧</span>Banking AI
+            Assistant</button>
+          <button id="nav-documents" class="nav-tab" onclick="switchTab('documents')"><span
+              class="nav-icon">▤</span>Knowledge Library</button>
+          <button id="nav-changes" class="nav-tab" onclick="switchTab('changes')"><span class="nav-icon">⇄</span>Policy
+            Updates</button>
+          <button id="nav-temporal" class="nav-tab" onclick="switchTab('temporal')"><span
+              class="nav-icon">◷</span>Point-in-time Review</button>
+          <button id="nav-compare" class="nav-tab" onclick="switchTab('compare')"><span class="nav-icon">⇆</span>Compare
+            Versions</button>
+          <button id="nav-status" class="nav-tab" onclick="switchTab('status')"><span class="nav-icon">⌁</span>Platform
+            Info</button>
+        </nav>
       </div>
-      <div class="flex items-center space-x-4">
-        <span>Point-in-Time Regulatory Audits</span>
-        <span>•</span>
-        <span class="text-slate-400">v1.2.0</span>
+      <div class="sidebar-bottom">
+        <strong>Coverage note</strong>
+        <p>Answers are limited to documents currently indexed in this workspace. Check cited official sources before
+          making compliance decisions.</p>
       </div>
-    </div>
-  </footer>
+    </aside>
 
-  <!-- CLIENT-SIDE APPLICATION SCRIPT (ZERO DEPENDENCY) -->
+    <div class="main-area">
+      <header class="topbar">
+        <div class="crumb">Banking workspace / <b id="current-view-label">Overview</b></div>
+        <div class="top-actions">
+          <span class="system-pill"><i class="dot"></i><span id="header-doc-count">Loading documents…</span></span>
+          <span class="system-pill">Qdrant <b id="header-chunk-count">Loading…</b></span>
+          <a class="text-link" href="/docs" target="_blank" rel="noopener">API docs ↗</a>
+        </div>
+      </header>
+
+      <main class="page-wrap">
+        <section id="sec-dashboard" class="space-y-5">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">Your banking workspace</div>
+              <h1>Your banking, in one view.</h1>
+              <p class="subtitle">Explore indexed RBI directions, ask evidence-grounded questions and inspect how
+                regulatory requirements change over time.</p>
+            </div>
+            <span class="system-pill">Banking intelligence · <b>India</b></span>
+          </div>
+
+          <div class="hero">
+            <div class="hero-kicker">FINANCIAL KNOWLEDGE ASSISTANT</div>
+            <h2>Make better-informed banking decisions.</h2>
+            <p>Ask a question about the regulatory material indexed in this platform. Add an optional cutoff date to
+              evaluate the information available at a point in time.</p>
+            <form class="search-row" onsubmit="handleHomepageSearch(event)">
+              <input id="hp-search-input" type="text"
+                placeholder="e.g. Which RBI guidelines cover customer KYC and periodic updation?" required />
+              <button class="primary-btn" type="submit">Ask ArthaOne →</button>
+            </form>
+            <div class="date-line">Optional information date <input id="hp-cutoff-date" type="date" /><button
+                type="button" onclick="clearHpCutoff()" class="text-xs underline">Clear</button></div>
+          </div>
+
+          <div class="prompt-grid">
+            <button class="prompt-card"
+              onclick="executeExampleQuestion('What are the key RBI requirements for customer KYC and periodic updation?')"><span>01
+                /
+                KYC & CUSTOMER ONBOARDING</span><strong>Explore customer KYC and onboarding
+                requirements.</strong></button>
+            <button class="prompt-card"
+              onclick="executeExampleQuestion('What should a bank do when a customer raises an unresolved service complaint?')"><span>02
+                / CUSTOMER SERVICE</span><strong>Understand how banks can handle unresolved customer
+                complaints.</strong></button>
+            <button class="prompt-card"
+              onclick="executeExampleQuestion('Summarize the latest indexed changes affecting bank lending requirements.')"><span>03
+                / LENDING & CREDIT</span><strong>Explore indexed RBI updates affecting lending and
+                credit.</strong></button>
+          </div>
+
+          <div id="hp-ai-loading" class="hidden loading"><span class="spinner"></span>Retrieving regulatory passages and
+            checking answer grounding…</div>
+          <div id="hp-ai-result-container" class="result-area"></div>
+
+          <div class="kpi-grid">
+            <div class="panel kpi">
+              <div class="kpi-top"><span>Knowledge documents</span><span class="kpi-icon">▤</span></div>
+              <div id="dash-doc-count" class="kpi-value">—</div>
+              <div class="kpi-note">Resources indexed in your workspace</div>
+            </div>
+            <div class="panel kpi">
+              <div class="kpi-top"><span>Document versions</span><span class="kpi-icon">▱</span></div>
+              <div id="dash-ver-count" class="kpi-value">—</div>
+              <div class="kpi-note">Version records</div>
+            </div>
+            <div class="panel kpi">
+              <div class="kpi-top"><span>Searchable knowledge</span><span class="kpi-icon">◈</span></div>
+              <div id="dash-chunk-count" class="kpi-value">—</div>
+              <div class="kpi-note">Indexed content segments</div>
+            </div>
+            <div class="panel kpi">
+              <div class="kpi-top"><span>Policy updates</span><span class="kpi-icon">⇄</span></div>
+              <div id="dash-change-count" class="kpi-value">—</div>
+              <div class="kpi-note">Changes tracked in your knowledge base</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Recently added knowledge</div>
+                <div class="panel-desc">Your latest indexed banking and policy resources</div>
+              </div><button class="text-link" onclick="switchTab('documents')">Explore library →</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Document</th>
+                    <th>Publication</th>
+                    <th>Effective</th>
+                    <th>Version</th>
+                    <th>Source</th>
+                  </tr>
+                </thead>
+                <tbody id="dash-recent-tbody">
+                  <tr>
+                    <td colspan="5" class="empty">Loading document records…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="sec-ask" class="hidden space-y-5">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">Ask ArthaOne</div>
+              <h1>Banking AI assistant</h1>
+              <p class="subtitle">Submit a question to the existing RAG query endpoint. Responses and citations are
+                rendered from the backend payload.</p>
+            </div>
+          </div>
+          <div class="panel content-card">
+            <h2>What would you like to know?</h2>
+            <p class="intro">Use a natural-language question. The cutoff date is optional and is passed to the backend
+              as <code>as_of_date</code>.</p>
+            <form onsubmit="handleAiQuery(event)">
+              <textarea id="ai-question-input" rows="4" class="w-full"
+                placeholder="Ask about an indexed RBI direction, provision, amendment or effective date…"
+                required></textarea>
+              <div class="toolbar mt-3"><label class="text-xs font-semibold text-slate-600">As of date</label><input
+                  id="ai-cutoff-date" class="date-field" type="date" /><button type="button" onclick="clearAiCutoff()"
+                  class="text-xs text-blue-600 underline">Clear date</button><span class="flex-1"></span><button
+                  class="primary-btn" type="submit">Ask ArthaOne →</button></div>
+            </form>
+            <div class="flex flex-wrap gap-2 mt-5 pt-4 border-t border-slate-100">
+              <button class="tag"
+                onclick="setPrompt('What are the key RBI requirements for customer KYC and periodic updation?')">KYC &
+                onboarding</button>
+              <button class="tag"
+                onclick="setPrompt('What should a bank do when a customer raises an unresolved service complaint?')">Customer
+                complaints</button>
+              <button class="tag"
+                onclick="setPrompt('Summarize the latest indexed changes affecting bank lending requirements.', '2026-10-25')">Lending
+                updates · latest</button>
+              <button class="tag"
+                onclick="setPrompt('Summarize the latest indexed changes affecting bank lending requirements.', '2026-10-10')">Lending
+                updates · 10 Oct view</button>
+              <button class="tag"
+                onclick="setPrompt('As of September 30, 2026, which RBI directions in the database were already published but had not yet become effective?', '2026-09-30')">Published,
+                not yet effective</button>
+            </div>
+          </div>
+          <div id="ai-loading" class="hidden loading"><span class="spinner"></span>Processing query…</div>
+          <div id="ai-result-container" class="result-area"></div>
+        </section>
+
+        <section id="sec-documents" class="hidden space-y-5">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">Knowledge centre</div>
+              <h1>Knowledge library</h1>
+              <p class="subtitle">Explore the records returned by <code>/api/documents</code>, including publication and
+                effective dates.</p>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">All knowledge resources</div>
+                <div class="panel-desc">Search by title, institution or document ID</div>
+              </div><input id="doc-search-input" class="field" type="search" onkeyup="filterDocsTable()"
+                placeholder="Filter documents…" />
+            </div>
+            <div class="table-wrap">
+              <table id="all-docs-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Regulator</th>
+                    <th>Title</th>
+                    <th>Publication date</th>
+                    <th>Effective date</th>
+                    <th>Version</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="all-docs-tbody">
+                  <tr>
+                    <td colspan="7" class="empty">Loading documents…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="sec-changes" class="hidden space-y-5">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">What's changing</div>
+              <h1>Policy & regulatory updates</h1>
+              <p class="subtitle">Review policy changes and source details returned by
+                <code>/api/change-events</code>.
+              </p>
+            </div>
+          </div>
+          <div id="changes-container" class="space-y-4">
+            <div class="panel empty">Loading tracked events…</div>
+          </div>
+        </section>
+
+        <section id="sec-temporal" class="hidden space-y-5">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">Historical view</div>
+              <h1>Point-in-time review</h1>
+              <p class="subtitle">Choose a date to inspect the active and future document groups returned by the
+                temporal endpoint.</p>
+            </div>
+          </div>
+          <div class="panel content-card">
+            <div class="toolbar"><label class="text-xs font-semibold text-slate-600" for="temporal-audit-date">Audit
+                date</label><input id="temporal-audit-date" class="date-field" type="date" value="2026-09-30" /><button
+                class="primary-btn" onclick="runTemporalAudit()">Run point-in-time audit →</button></div>
+            <div id="temporal-results-container" class="mt-5">
+              <div class="empty">Choose a date and run the audit to view the backend result.</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="sec-compare" class="hidden space-y-5">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">Version history</div>
+              <h1>Compare document versions</h1>
+              <p class="subtitle">Request the supported comparison preset from the existing backend endpoint. Historical
+                baseline text is not fabricated in this view.</p>
+            </div>
+          </div>
+          <div class="panel content-card">
+            <div class="toolbar">
+              <div>
+                <h2>Small Finance Banks · Paragraph 37</h2>
+                <p class="intro mb-0">Compare the recorded amendment event with its official notification evidence.</p>
+              </div><span class="flex-1"></span><select id="compare-preset" class="field">
+                <option value="sfb-para37">RBI SFB Directions · Paragraph 37</option>
+              </select><button class="primary-btn" onclick="runCompare()">Load comparison</button>
+            </div>
+            <div id="compare-summary-box"
+              class="mt-5 p-4 rounded-xl bg-blue-50 border border-blue-100 text-blue-900 text-sm">Select “Load
+              comparison” to retrieve the backend summary.</div>
+            <div class="diff-grid mt-4">
+              <div class="diff-pane">
+                <div class="diff-pane-head">Historical baseline</div>
+                <div id="diff-left-label" class="hidden"></div>
+                <div id="diff-left-content" class="diff-pane-body text-slate-600">Prior wording is not reproduced unless
+                  verified against an official historical source.</div>
+              </div>
+              <div class="diff-pane">
+                <div class="diff-pane-head">Official amendment evidence</div>
+                <div id="diff-right-label" class="hidden"></div>
+                <div id="diff-right-content" class="diff-pane-body text-slate-700">RBI amendment notification 13741
+                  states that paragraph 37 (Section C, Chapter IV: “Limits for Non-Option Derivative Contracts”) stands
+                  deleted, effective immediately upon issuance.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="sec-status" class="hidden space-y-5">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">About ArthaOne</div>
+              <h1>About ArthaOne</h1>
+              <p class="subtitle">Configured components based on the current project setup. This page does not claim a
+                live health check unless the backend exposes one.</p>
+            </div><a class="text-link" href="/docs" target="_blank" rel="noopener">Open FastAPI Swagger ↗</a>
+          </div>
+          <div class="status-grid">
+            <div class="status-item">
+              <h3>Metadata store</h3>
+              <p><b>SQLite</b> · <code>data/regulatory.db</code></p>
+              <p>Document, version and regulatory change metadata.</p>
+            </div>
+            <div class="status-item">
+              <h3>Vector retrieval</h3>
+              <p><b>Qdrant</b> · collection <code>regulatory_chunks</code></p>
+              <p>Semantic retrieval over indexed regulatory passages.</p>
+            </div>
+            <div class="status-item">
+              <h3>Embedding model</h3>
+              <p><b>sentence-transformers/all-MiniLM-L6-v2</b></p>
+              <p>Encodes questions and document chunks for vector search.</p>
+            </div>
+            <div class="status-item">
+              <h3>Language model providers</h3>
+              <p><b>Groq</b> · <code>openai/gpt-oss-20b</code></p>
+              <p>Google Gemini is configured as a secondary provider where quota is available.</p>
+            </div>
+            <div class="status-item">
+              <h3>Application API</h3>
+              <p><b>FastAPI</b> · same-origin endpoints</p>
+              <p><a href="/docs" target="_blank" rel="noopener" class="text-link">Inspect API routes and schemas ↗</a>
+              </p>
+            </div>
+            <div class="status-item">
+              <h3>Coverage and limitations</h3>
+              <p>Currently indexed regulatory documents only.</p>
+              <p>Not exhaustive legal coverage and not a substitute for official legal or compliance review.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+      <footer>
+        <div class="flex flex-wrap justify-between gap-2"><span><b class="text-slate-600">ArthaOne</b> · Banking &
+            Financial Regulatory Intelligence</span><span>Knowledge-led banking workspace · <a href="/docs"
+              class="text-blue-600" target="_blank" rel="noopener">FastAPI documentation</a></span></div>
+      </footer>
+    </div>
+  </div>
   <script>
-    // Lightweight Inline SVG Icon Engine (0ms load time, 0 network requests)
-    const SVG_ICONS = {
+    // Inline SVG Icon dictionary (zero network latency)
+    const ICONS = {
       'shield-check': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>',
+      'layout-dashboard': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>',
       'database': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>',
       'cpu': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>',
       'message-square': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
-      'git-compare': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>',
       'file-text': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>',
       'clipboard-list': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>',
-      'layers': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
-      'search': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+      'calendar-clock': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="16" cy="16" r="6"/><polyline points="16 14 16 16 18 17"/></svg>',
       'calendar': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+      'git-compare': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>',
+      'activity': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
       'sparkles': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>',
-      'git-commit': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><line x1="3" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="21" y2="12"/></svg>',
-      'alert-triangle': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-      'file-check-2': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="m3 15 2 2 4-4"/></svg>',
-      'library': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>',
+      'layers': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
       'clipboard-check': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>',
-      'network': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>',
       'external-link': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
       'book-marked': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><polyline points="10 2 10 10 13 7 16 10 16 2"/></svg>',
-      'shield-alert': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+      'search': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>',
+      'arrow-right': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>',
+      'coins': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg>',
+      'scale': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>',
+      'home': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+      'smartphone': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>',
+      'check-circle': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+      'alert-triangle': '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
     };
 
-    function renderAllIcons() {
+    function renderIcons() {
       document.querySelectorAll('[data-icon]').forEach(el => {
-        const iconKey = el.getAttribute('data-icon');
-        const iconHtml = SVG_ICONS[iconKey];
-        if (iconHtml) {
-          el.innerHTML = iconHtml;
+        const k = el.getAttribute('data-icon');
+        if (ICONS[k]) {
+          el.innerHTML = ICONS[k];
           const svg = el.querySelector('svg');
           if (svg && el.className) {
             svg.setAttribute('class', el.className + ' svg-icon');
@@ -493,361 +2324,289 @@ Reserve Bank of India (Small Finance Banks - Miscellaneous) Directions, 2025
       });
     }
 
-    // Embedded sample dataset matching the live SQLite database
-    const SAMPLE_DOCUMENTS = [
-      {
-        id: 4,
-        regulator: "RBI",
-        title: "Reserve Bank of India (Small Finance Banks - Miscellaneous) Amendment Directions, 2026",
-        source_url: "https://rbi.org.in/scripts/NotificationUser.aspx?Mode=0&Id=13741",
-        publication_date: "2026-10-19",
-        effective_date: "2026-10-19",
-        version: "v1.0",
-        file_path: "data/raw/NT29576C2A2CDED3247308333EE2DE9383863.pdf"
-      },
-      {
-        id: 2,
-        regulator: "RBI",
-        title: "Implementation of Section 51A of UAPA, 1967: Updates to UNSC 1267/1989 Sanctions List (Amendment of 03 Entries)",
-        source_url: "https://www.rbi.org.in/scripts/bs_circularindexdisplay.aspx/Scripts/BS_CircularIndexDisplay.aspx?Id=13742",
-        publication_date: "2026-10-19",
-        effective_date: "2026-10-19",
-        version: "v1.0",
-        file_path: "data/raw/RBI_2026-2027_296.pdf"
-      },
-      {
-        id: 3,
-        regulator: "RBI",
-        title: "Minutes of the Monetary Policy Committee Meeting, October 5 to 7, 2026",
-        source_url: "https://rbi.org.in/scripts/BS_PressReleaseDisplay.aspx?prid=63839",
-        publication_date: "2026-10-21",
-        effective_date: "2026-10-21",
-        version: "v1.0",
-        file_path: "data/raw/RBI_second_circular.pdf"
-      },
-      {
-        id: 5,
-        regulator: "RBI",
-        title: "Reserve Bank of India (Commercial Banks - Miscellaneous) Second Amendment Directions, 2026",
-        source_url: "https://www.rbi.org.in/scripts/bs_circularindexdisplay.aspx/Scripts/BS_CircularIndexDisplay.aspx?Id=13740",
-        publication_date: "2026-10-19",
-        effective_date: "2026-10-19",
-        version: "v1.0",
-        file_path: "data/raw/RBI_Commercial_Banks_Miscellaneous_Amendment_2026.pdf"
-      },
-      {
-        id: 6,
-        regulator: "RBI",
-        title: "Reserve Bank of India (Commercial Banks - Credit Valuation Adjustment Framework) Directions, 2026",
-        source_url: "https://www.rbi.org.in/scripts/BS_ViewMasDirections.aspx?id=13729",
-        publication_date: "2026-10-07",
-        effective_date: "2027-04-01",
-        version: "v1.0",
-        file_path: "data/raw/rbi_master_13729_manual.pdf"
-      },
-      {
-        id: 7,
-        regulator: "RBI",
-        title: "Reserve Bank of India (Commercial Banks - Minimum Capital Requirements for Market Risk) Directions, 2026",
-        source_url: "https://www.rbi.org.in/scripts/BS_ViewMasDirections.aspx?id=13705",
-        publication_date: "2026-09-21",
-        effective_date: "2027-04-01",
-        version: "v1.0",
-        file_path: "data/raw/rbi_master_13705_manual.pdf"
-      },
-      {
-        id: 8,
-        regulator: "RBI",
-        title: "Reserve Bank of India [Conduct of Government Business by Agency Banks (ABs) - Payment of Agency Commission] Directions, 2026",
-        source_url: "https://www.rbi.org.in/scripts/BS_ViewMasDirections.aspx?id=13443",
-        publication_date: "2026-04-30",
-        effective_date: "2026-04-30",
-        version: "v1.0",
-        file_path: "data/raw/rbi_master_13443_manual.pdf"
-      },
-      {
-        id: 9,
-        regulator: "RBI",
-        title: "Reserve Bank of India [Disbursement of Government Pension by Agency Banks (ABs)] Directions, 2026",
-        source_url: "https://www.rbi.org.in/scripts/BS_ViewMasDirections.aspx?id=13442",
-        publication_date: "2026-04-30",
-        effective_date: "2026-04-30",
-        version: "v1.0",
-        file_path: "data/raw/rbi_master_13442_manual.pdf"
-      },
-      {
-        id: 10,
-        regulator: "RBI",
-        title: "Reserve Bank of India (Commercial Banks - Internal Ombudsman) Directions, 2026",
-        source_url: "https://www.rbi.org.in/scripts/BS_ViewMasDirections.aspx?id=13271",
-        publication_date: "2026-01-14",
-        effective_date: "2026-01-14",
-        version: "v1.0",
-        file_path: "data/raw/rbi_master_13271_manual.pdf"
-      }
-    ];
+    let globalDocuments = [];
+    let globalStats = {};
 
-    const SAMPLE_CHANGE_EVENTS = [
-      {
-        id: 1,
-        title: "Reserve Bank of India (Small Finance Banks - Miscellaneous) Directions, 2025",
-        provision: "Chapter IV, Section C, paragraph 37: Limits for Non-Option Derivative Contracts",
-        change_type: "deletion",
-        effective_date: "2026-10-19",
-        old_text: "The gross PV 01 of all non-option rupee derivative contracts (including rupee - foreign currency contracts) of a bank shall be within 0.25 per cent of its net worth as on the last balance sheet date...",
-        new_text: "[Paragraph deleted by amendment]",
-        evidence: "(ii) The amended instructions shall come into effect immediately upon issuance. 4. Section C on 'Limits for Non-Option Derivative Contracts' of Chapter IV... (paragraph 37) stands deleted.",
-        provenance: "Historical wording from secondary archive; verify against an original historical RBI document",
-        status: "candidate_deletion",
-        verified: false
-      },
-      {
-        id: 2,
-        title: "UN 1267/1989 Sanctions List (Implementation of Section 51A of UAPA, 1967)",
-        provision: "Individual QDi.082 MOUNIR EL MOTASSADEQ — Address",
-        change_type: "replacement",
-        effective_date: "2026-10-19",
-        old_text: "(In prison in Germany)",
-        new_text: "Marrakesh, Morocco",
-        evidence: "Page 2, QDi.082 entry: the address text '(In prison in Germany)' is struck through; 'Marrakesh, Morocco' appears as the address.",
-        provenance: "Official RBI Circular & Sanctions Annexure (PDF page 2 strikethrough inspection)",
-        status: "verified",
-        verified: true
-      },
-      {
-        id: 3,
-        title: "UN 1267/1989 Sanctions List (Implementation of Section 51A of UAPA, 1967)",
-        provision: "Entity QDe.132 TEHRIK-E TALIBAN PAKISTAN (TTP) — Leader information",
-        change_type: "deletion",
-        effective_date: "2026-10-19",
-        old_text: "Maulana Fazlullah (QDi.352)",
-        new_text: "[Leader reference removed; the entry retains Noor Wali Mehsud (QDi.427)]",
-        evidence: "Page 2, QDe.132 entry: 'Maulana Fazlullah (QDi.352)' is struck through. 'Noor Wali Mehsud (QDi.427)' appears as the remaining leader reference.",
-        provenance: "Official RBI Circular & Sanctions Annexure (PDF page 2 strikethrough inspection)",
-        status: "verified",
-        verified: true
-      }
-    ];
-
-    const KNOWLEDGE_RESPONSES = {
-      "sfb-latest": {
-        headline: "Paragraph 37 of the Small Finance Banks Directions was Deleted by RBI on October 19, 2026",
-        badge: { type: "amber", text: "Candidate Deletion — Verified Official Amendment" },
-        as_of_note: "Evaluated with latest regulatory directives (Post October 19, 2026).",
-        content: `Under the **Reserve Bank of India (Small Finance Banks - Miscellaneous) Amendment Directions, 2026** (Notification Id: 13741), Section C on *"Limits for Non-Option Derivative Contracts"* of Chapter IV (paragraph 37) **stands deleted** with immediate effect from **October 19, 2026**.\n\n### Key Compliance Findings:\n1. **Official Deletion Confirmed:** The official RBI amendment expressly strikes out paragraph 37.\n2. **Historical PV 01 Limit:** Previously, the gross PV 01 of non-option rupee derivative contracts had to stay within 0.25% of net worth.\n3. **Provenance Audit:** The historical text originates from a secondary source archive (TrackRBI) and remains flagged as a candidate deletion pending physical historical gazette audit, while the deletion mandate itself is authenticated.`,
-        citations: [
-          {
-            title: "Reserve Bank of India (Small Finance Banks - Miscellaneous) Amendment Directions, 2026",
-            doc_id: 4,
-            regulator: "RBI",
-            page: "Page 1",
-            published: "2026-10-19",
-            quote: 'Section C on "Limits for Non-Option Derivative Contracts" of Chapter IV of the Reserve Bank of India (Small Finance Banks - Miscellaneous) Directions, 2025 (paragraph 37 of the Directions) stands deleted.',
-            confidence: "100% Exact Match"
-          },
-          {
-            title: "Consolidated Master Direction 204MD (Historical Reference)",
-            doc_id: 4,
-            regulator: "RBI",
-            page: "Page 2-3",
-            published: "2025-03-15",
-            quote: 'Chapter IV, Section C, paragraph 37: The gross PV 01 of all non-option rupee derivative contracts...',
-            confidence: "Secondary Source Verified"
-          }
-        ]
-      },
-      "sfb-cutoff": {
-        headline: "As of October 10, 2026, Paragraph 37 Remains in Active Force",
-        badge: { type: "blue", text: "Point-in-Time Regulatory Posture" },
-        as_of_note: "Cutoff Date Filter: 2026-10-10 (Before Amendment Notification 13741).",
-        content: `As of the queried cutoff date (**2026-10-10**), paragraph 37 had **not yet been deleted**. The amendment deleting this provision was published later, on **October 19, 2026**.\n\n### Point-in-Time Regulatory Status:\n- **Active Rule on October 10, 2026:** Small Finance Banks were required to ensure the gross PV 01 of all non-option rupee derivative contracts (including rupee-foreign currency contracts) remained within **0.25 per cent** of their net worth as of the last balance sheet date.\n- **Subsequent Modification Notice:** Note that an amendment was issued 9 days later (on October 19, 2026) which formally deleted this requirement.`,
-        citations: [
-          {
-            title: "Reserve Bank of India (Small Finance Banks - Miscellaneous) Directions, 2025 (Pre-amendment)",
-            doc_id: 4,
-            regulator: "RBI",
-            page: "Chapter IV, Section C",
-            published: "2025-03-15",
-            quote: 'The gross PV 01 of all non-option rupee derivative contracts (including rupee - foreign currency contracts) of a bank shall be within 0.25 per cent of its net worth.',
-            confidence: "Historical Valid Passage"
-          }
-        ]
-      },
-      "sanctions": {
-        headline: "UN Sanctions List Updates under UAPA Section 51A (03 Entries Modified)",
-        badge: { type: "emerald", text: "Direct Entry Exact Verification" },
-        as_of_note: "Published on 2026-10-19 by RBI Department of Regulation.",
-        content: `The Reserve Bank of India issued circular **RBI/2026-2027/296** communicating United Nations Security Council (UNSC) 1267/1989 Committee amendments:\n\n1. **QDi.082 (MOUNIR EL MOTASSADEQ):** Address changed from *"In prison in Germany"* to *"Marrakesh, Morocco"*.\n2. **QDe.132 (TEHRIK-E TALIBAN PAKISTAN - TTP):** Deletion of leader reference *Maulana Fazlullah (QDi.352)*, while retaining *Noor Wali Mehsud (QDi.427)*.\n\n### Mandatory Compliance Action:\nAll Regulated Entities (REs) must verify customer accounts against these updated identifiers and immediately report any matching assets or transactions to the FIU-IND.`,
-        citations: [
-          {
-            title: "Implementation of Section 51A of UAPA, 1967: Updates to UNSC Sanctions List",
-            doc_id: 2,
-            regulator: "RBI",
-            page: "Page 2",
-            published: "2026-10-19",
-            quote: 'Page 2, QDi.082 entry: the address text (In prison in Germany) is struck through; Marrakesh, Morocco appears as the address.',
-            confidence: "100% PDF Page Verified"
-          }
-        ]
-      },
-      "mpc": {
-        headline: "Monetary Policy Committee (MPC) Meeting Minutes — October 2026",
-        badge: { type: "blue", text: "Verified Press Release & Policy Document" },
-        as_of_note: "Meeting held October 5 to 7, 2026; Published on October 21, 2026.",
-        content: `The Monetary Policy Committee evaluated prevailing macroeconomic conditions, domestic inflation projections, and liquidity dynamics.\n\n- **Stance & Rates:** Detailed deliberations of voting members regarding policy repo rates and liquidity management frameworks.\n- **Temporal Note:** If querying compliance posture prior to October 21, 2026, these minutes were not yet public.`,
-        citations: [
-          {
-            title: "Minutes of the Monetary Policy Committee Meeting, October 5 to 7, 2026",
-            doc_id: 3,
-            regulator: "RBI",
-            page: "Page 1-4",
-            published: "2026-10-21",
-            quote: 'The Monetary Policy Committee met on October 5, 6 and 7, 2026...',
-            confidence: "Official Press Release Record"
-          }
-        ]
-      }
-    };
-
-    function switchTab(tabId) {
-      const tabs = ['ask', 'diff', 'repository', 'audit', 'architecture'];
+    function switchTab(tabKey) {
+      const tabs = ['dashboard', 'ask', 'documents', 'changes', 'temporal', 'compare', 'status'];
       tabs.forEach(t => {
-        const sec = document.getElementById(`tab-${t}`);
-        const btn = document.getElementById(`tab-btn-${t}`);
+        const sec = document.getElementById(`sec-${t}`);
+        const btn = document.getElementById(`nav-${t}`);
         if (sec && btn) {
-          if (t === tabId) {
+          if (t === tabKey) {
             sec.classList.remove('hidden');
-            btn.className = "tab-btn px-4 py-3 font-medium border-b-2 border-indigo-500 text-white flex items-center space-x-2";
+            btn.className = "nav-tab px-4 py-3 border-b-2 border-blue-600 text-blue-900 flex items-center space-x-2 whitespace-nowrap font-semibold";
           } else {
             sec.classList.add('hidden');
-            btn.className = "tab-btn px-4 py-3 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2";
+            btn.className = "nav-tab px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2 whitespace-nowrap";
           }
         }
       });
-      renderAllIcons();
+      renderIcons();
     }
 
-    function setPrompt(text, cutoffDate = "") {
-      document.getElementById('query-input').value = text;
-      document.getElementById('cutoff-date').value = cutoffDate;
-      handleQuerySubmit(new Event('submit'));
+    function clearHpCutoff() {
+      document.getElementById('hp-cutoff-date').value = "";
     }
 
-    function clearCutoffDate() {
-      document.getElementById('cutoff-date').value = "";
+    function clearAiCutoff() {
+      document.getElementById('ai-cutoff-date').value = "";
     }
 
-    async function handleQuerySubmit(e) {
+    // Handles execution of the 6 clickable question cards directly
+    function executeExampleQuestion(questionText) {
+      // Populate inputs
+      document.getElementById('hp-search-input').value = questionText;
+      document.getElementById('ai-question-input').value = questionText;
+      const cutoff = document.getElementById('hp-cutoff-date').value || null;
+
+      // Run query in-place on homepage
+      runQueryProcess(questionText, cutoff, 'hp');
+    }
+
+    // Handles form submission on Homepage search bar
+    function handleHomepageSearch(e) {
       if (e) e.preventDefault();
-      const question = document.getElementById('query-input').value.trim();
-      const cutoff = document.getElementById('cutoff-date').value;
+      const question = document.getElementById('hp-search-input').value.trim();
+      const cutoff = document.getElementById('hp-cutoff-date').value || null;
       if (!question) return;
 
-      const loading = document.getElementById('query-loading');
-      const container = document.getElementById('query-result-container');
-      
-      loading.classList.remove('hidden');
-      container.innerHTML = "";
-
-      // Try live API call if running via web_app.py
-      if (window.location.protocol.startsWith('http')) {
-        try {
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 2000);
-          const response = await fetch('/api/query', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question: question, as_of_date: cutoff || null }),
-            signal: controller.signal
-          });
-          clearTimeout(timer);
-
-          if (response.ok) {
-            const data = await response.json();
-            renderQueryResult(data);
-            loading.classList.add('hidden');
-            return;
-          }
-        } catch (err) {
-          console.warn("Backend API timeout or unavailable; using local engine simulation.");
-        }
-      }
-
-      // Instant local engine response
-      setTimeout(() => {
-        loading.classList.add('hidden');
-        let chosen;
-        const qLower = question.toLowerCase();
-
-        if (qLower.includes('paragraph 37') || qLower.includes('small finance') || qLower.includes('derivative')) {
-          if (cutoff && cutoff <= "2026-10-18") {
-            chosen = KNOWLEDGE_RESPONSES["sfb-cutoff"];
-          } else {
-            chosen = KNOWLEDGE_RESPONSES["sfb-latest"];
-          }
-        } else if (qLower.includes('sanction') || qLower.includes('uapa') || qLower.includes('51a')) {
-          chosen = KNOWLEDGE_RESPONSES["sanctions"];
-        } else if (qLower.includes('mpc') || qLower.includes('monetary policy') || qLower.includes('repo')) {
-          chosen = KNOWLEDGE_RESPONSES["mpc"];
-        } else {
-          chosen = {
-            headline: `Regulatory Analysis for: "${question}"`,
-            badge: { type: "blue", text: "Semantic Retrieval" },
-            as_of_note: cutoff ? `As of Cutoff: ${cutoff}` : "Latest Regulatory Directives",
-            content: `The regulatory intelligence engine searched the active collection for passages matching this question.\n\nFor questions concerning specific RBI directions (such as SFB derivative limits or UAPA sanctions list entries), please check the verified citations below.`,
-            citations: [
-              {
-                title: "Reserve Bank of India Master Directions Repository",
-                doc_id: 1,
-                regulator: "RBI",
-                page: "General Reference",
-                published: "2026-10-19",
-                quote: "Regulatory records matched via semantic vector similarity (all-MiniLM-L6-v2).",
-                confidence: "Semantic Passages Retrieved"
-              }
-            ]
-          };
-        }
-        renderQueryResult(chosen);
-      }, 50);
+      document.getElementById('ai-question-input').value = question;
+      runQueryProcess(question, cutoff, 'hp');
     }
 
-    function renderQueryResult(result) {
-      const container = document.getElementById('query-result-container');
-      const badgeColors = {
-        amber: "bg-amber-100 text-amber-800 border-amber-300",
-        emerald: "bg-emerald-100 text-emerald-800 border-emerald-300",
-        blue: "bg-blue-100 text-blue-800 border-blue-300"
+    // Handles prompt setter for Tab 2 (Ask AI)
+    function setPrompt(q, cutoff = "") {
+      switchTab('ask');
+      document.getElementById('ai-question-input').value = q;
+      document.getElementById('ai-cutoff-date').value = cutoff;
+      document.getElementById('hp-search-input').value = q;
+      runQueryProcess(q, cutoff || null, 'ai');
+    }
+
+    // Handles form submit in Tab 2 (Ask AI)
+    function handleAiQuery(e) {
+      if (e) e.preventDefault();
+      const question = document.getElementById('ai-question-input').value.trim();
+      const cutoff = document.getElementById('ai-cutoff-date').value || null;
+      if (!question) return;
+
+      runQueryProcess(question, cutoff, 'ai');
+    }
+
+    // Core query runner that communicates with FastAPI /api/query
+    async function runQueryProcess(question, cutoff, targetView) {
+      const hpLoading = document.getElementById('hp-ai-loading');
+      const hpContainer = document.getElementById('hp-ai-result-container');
+      const aiLoading = document.getElementById('ai-loading');
+      const aiContainer = document.getElementById('ai-result-container');
+
+      if (targetView === 'hp') {
+        hpLoading.classList.remove('hidden');
+        hpContainer.innerHTML = "";
+      } else {
+        aiLoading.classList.remove('hidden');
+        aiContainer.innerHTML = "";
+      }
+
+      try {
+        const res = await fetch('/api/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: question, as_of_date: cutoff })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          renderAiResult(data, hpContainer);
+          renderAiResult(data, aiContainer);
+
+          if (targetView === 'hp') {
+            hpContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } else {
+            aiContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        } else {
+          const errHtml = `<div class="p-4 bg-rose-50 text-rose-800 rounded-xl text-xs border border-rose-200">Error ${res.status}: Failed to retrieve response from regulatory API.</div>`;
+          hpContainer.innerHTML = errHtml;
+          aiContainer.innerHTML = errHtml;
+        }
+      } catch (err) {
+        const errHtml = `<div class="p-4 bg-rose-50 text-rose-800 rounded-xl text-xs border border-rose-200">Network Error: ${err.message}. Please verify the FastAPI backend is running.</div>`;
+        hpContainer.innerHTML = errHtml;
+        aiContainer.innerHTML = errHtml;
+      } finally {
+        hpLoading.classList.add('hidden');
+        aiLoading.classList.add('hidden');
+      }
+    }
+
+    // Upgraded markdown & content formatter with headings, styled bullets, and highlighted dates
+    function formatAiContent(raw) {
+      if (!raw) return "";
+
+      const lines = raw.split('\n');
+      const html = [];
+      let inList = false;
+      let listType = null;
+
+      const flushList = () => {
+        if (inList) {
+          html.push(listType === 'ol' ? '</ol>' : '</ul>');
+          inList = false;
+          listType = null;
+        }
       };
 
-      const badgeClass = badgeColors[result.badge?.type] || badgeColors.blue;
+      const highlightDates = (text) => {
+        // Formats dates such as YYYY-MM-DD or Month DD, YYYY or DD Month YYYY into prominent pill tags
+        return text.replace(
+          /\b(\d{4}-\d{2}-\d{2}|\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}|\b\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December),?\s+\d{4})\b/gi,
+          '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200 font-mono tracking-tight">$1</span>'
+        );
+      };
+
+      const formatInline = (text) => {
+        let s = text;
+        s = s.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>');
+        s = s.replace(/\*(.*?)\*/g, '<em class="italic text-slate-700">$1</em>');
+        s = s.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 font-mono text-xs border border-slate-200">$1</code>');
+        s = highlightDates(s);
+        return s;
+      };
+
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+
+        if (!line) {
+          flushList();
+          continue;
+        }
+
+        // Headings
+        if (line.startsWith('### ')) {
+          flushList();
+          html.push(`<h4 class="text-sm font-bold text-slate-900 mt-4 mb-2 flex items-center space-x-2 border-b border-slate-100 pb-1">
+            <span class="w-1.5 h-3.5 bg-blue-600 rounded-xs inline-block"></span>
+            <span>${formatInline(line.substring(4))}</span>
+          </h4>`);
+          continue;
+        }
+        if (line.startsWith('## ')) {
+          flushList();
+          html.push(`<h3 class="text-base font-bold text-slate-900 mt-5 mb-2.5 flex items-center space-x-2 border-b border-slate-200 pb-1.5">
+            <span class="w-2 h-4 bg-blue-700 rounded-xs inline-block"></span>
+            <span>${formatInline(line.substring(3))}</span>
+          </h3>`);
+          continue;
+        }
+        if (line.startsWith('# ')) {
+          flushList();
+          html.push(`<h2 class="text-lg font-bold text-slate-900 mt-6 mb-3">${formatInline(line.substring(2))}</h2>`);
+          continue;
+        }
+
+        // Unordered bullet list
+        if (line.match(/^[-*]\s+/)) {
+          if (!inList || listType !== 'ul') {
+            flushList();
+            html.push('<ul class="space-y-2 my-2.5 text-slate-700">');
+            inList = true;
+            listType = 'ul';
+          }
+          let content = line.replace(/^[-*]\s+/, '');
+          html.push(`<li class="flex items-start space-x-2.5 text-xs sm:text-sm leading-relaxed">
+            <span class="text-blue-500 font-bold mt-0.5 text-base select-none">&bull;</span>
+            <div class="flex-1">${formatInline(content)}</div>
+          </li>`);
+          continue;
+        }
+
+        // Ordered numeric list
+        let numMatch = line.match(/^(\d+)\.\s+/);
+        if (numMatch) {
+          if (!inList || listType !== 'ol') {
+            flushList();
+            html.push('<ol class="space-y-2 my-2.5 text-slate-700">');
+            inList = true;
+            listType = 'ol';
+          }
+          let content = line.substring(numMatch[0].length);
+          html.push(`<li class="flex items-start space-x-2.5 text-xs sm:text-sm leading-relaxed">
+            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-bold font-mono shrink-0 mt-0.5">${numMatch[1]}</span>
+            <div class="flex-1">${formatInline(content)}</div>
+          </li>`);
+          continue;
+        }
+
+        // Regular paragraph
+        flushList();
+        html.push(`<p class="text-xs sm:text-sm text-slate-700 leading-relaxed my-2">${formatInline(line)}</p>`);
+      }
+      flushList();
+
+      return html.join('\n');
+    }
+
+    // Renders the AI response container with formatting, citations, and grounding status
+    function renderAiResult(data, container) {
+      if (!container) return;
+
+      const badgeStyles = {
+        emerald: {
+          cls: "bg-emerald-50 text-emerald-800 border-emerald-300",
+          icon: '<span data-icon="shield-check" class="w-3.5 h-3.5 text-emerald-600"></span>'
+        },
+        amber: {
+          cls: "bg-amber-50 text-amber-800 border-amber-300",
+          icon: '<span data-icon="alert-triangle" class="w-3.5 h-3.5 text-amber-600"></span>'
+        },
+        blue: {
+          cls: "bg-blue-50 text-blue-800 border-blue-300",
+          icon: '<span data-icon="sparkles" class="w-3.5 h-3.5 text-blue-600"></span>'
+        },
+        rose: {
+          cls: "bg-rose-50 text-rose-800 border-rose-300",
+          icon: '<span data-icon="alert-triangle" class="w-3.5 h-3.5 text-rose-600"></span>'
+        }
+      };
+
+      const bStyle = badgeStyles[data.badge?.type] || badgeStyles.emerald;
+      const formattedHtml = formatAiContent(data.content);
 
       let citationsHtml = "";
-      if (result.citations && result.citations.length > 0) {
+      if (data.citations && data.citations.length > 0) {
         citationsHtml = `
-          <div class="mt-6 pt-6 border-t border-slate-200">
-            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center space-x-1.5">
-              <span data-icon="book-marked" class="w-4 h-4 text-indigo-600"></span>
-              <span>Authoritative Regulatory Citations (${result.citations.length})</span>
+          <div class="mt-6 pt-5 border-t border-slate-200">
+            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center space-x-1.5">
+              <span data-icon="book-marked" class="w-4 h-4 text-blue-600"></span>
+              <span>Authoritative Source Citations (${data.citations.length})</span>
             </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              ${result.citations.map(c => `
-                <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-1.5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              ${data.citations.map(c => `
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs space-y-2">
                   <div class="flex items-center justify-between">
-                    <span class="font-bold text-slate-800 truncate">${c.title}</span>
-                    <span class="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded text-[10px] font-mono">${c.regulator || 'RBI'}</span>
+                    <span class="font-bold text-slate-900 truncate" title="${c.title}">${c.title}</span>
+                    <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] font-mono font-semibold border border-blue-200">${c.regulator || 'RBI'}</span>
                   </div>
-                  <div class="text-slate-500 flex items-center space-x-2 text-[11px]">
-                    <span>${c.page || 'Page 1'}</span>
-                    <span>•</span>
-                    <span>Published: ${c.published || '2026-10-19'}</span>
+                  <div class="text-slate-500 text-[11px] flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono text-[10px]">Page ${c.page_number || '1'}</span>
+                    <span>&bull;</span>
+                    <span>Pub: <strong class="text-slate-700 font-mono">${c.publication_date || 'N/A'}</strong></span>
+                    <span>&bull;</span>
+                    <span>Eff: <strong class="text-slate-700 font-mono">${c.effective_date || 'N/A'}</strong></span>
                   </div>
-                  <blockquote class="bg-white p-2 rounded border border-slate-200 italic text-slate-600 font-mono text-[11px]">
+                  <blockquote class="bg-white p-2.5 rounded-lg border-l-2 border-blue-600 text-slate-700 italic text-[11px] leading-relaxed">
                     "${c.quote}"
                   </blockquote>
-                  <div class="text-right">
-                    <span class="text-[10px] font-semibold text-emerald-600">✓ ${c.confidence || 'Citation Verified'}</span>
-                  </div>
+                  ${c.source_url ? `
+                    <div class="text-right pt-1">
+                      <a href="${c.source_url}" target="_blank" class="text-[11px] text-blue-600 hover:text-blue-800 font-semibold inline-flex items-center space-x-1">
+                        <span>Open official source</span>
+                        <span data-icon="external-link" class="w-3 h-3"></span>
+                      </a>
+                    </div>
+                  ` : ''}
                 </div>
               `).join('')}
             </div>
@@ -855,243 +2614,275 @@ Reserve Bank of India (Small Finance Banks - Miscellaneous) Directions, 2025
         `;
       }
 
-      let formattedContent = result.content
-        .replace(/\n\n/g, '<br/><br/>')
-        .replace(/\n/g, '<br/>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>');
-
       container.innerHTML = `
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div>
-              <span class="text-xs px-2.5 py-1 rounded-full border font-semibold ${badgeClass}">
-                ${result.badge?.text || 'Grounded Response'}
+              <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full border text-xs font-semibold ${bStyle.cls}">
+                ${bStyle.icon}
+                <span>${data.badge?.text || 'Verified Grounded'}</span>
               </span>
-              <h3 class="text-base font-bold text-slate-900 mt-2">${result.headline}</h3>
+              <h3 class="text-lg font-bold text-slate-900 mt-2">${data.headline}</h3>
             </div>
-            <div class="text-xs text-slate-500 font-mono">
-              ${result.as_of_note || ''}
+            <div class="text-xs text-slate-500 font-mono bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200 self-start sm:self-auto">
+              ${data.as_of_note || 'Latest Posture'}
             </div>
           </div>
 
-          <div class="text-sm text-slate-700 leading-relaxed font-sans">
-            ${formattedContent}
+          <div class="text-slate-800 font-sans">
+            ${formattedHtml}
           </div>
 
           ${citationsHtml}
         </div>
       `;
 
-      renderAllIcons();
+      renderIcons();
     }
 
-    function renderDiffSelection() {
-      const type = document.getElementById('diff-selector').value;
-      const statusText = document.getElementById('diff-status-text');
-      const baselineBadge = document.getElementById('diff-baseline-badge');
-      const amendedBadge = document.getElementById('diff-amended-badge');
-      const baselineBox = document.getElementById('diff-baseline-content');
-      const amendedBox = document.getElementById('diff-amended-content');
-      const evidenceBox = document.getElementById('diff-evidence-text');
+    async function loadDashboardStats() {
+      try {
+        const res = await fetch('/api/stats');
+        if (res.ok) {
+          const data = await res.json();
+          globalStats = data;
+          document.getElementById('dash-doc-count').innerText = data.documents;
+          document.getElementById('dash-ver-count').innerText = data.versions;
+          document.getElementById('dash-chunk-count').innerText = data.qdrant_points;
+          document.getElementById('dash-change-count').innerText = data.change_events;
 
-      if (type === 'sfb-para37') {
-        statusText.innerText = "Official amendment confirmed deletion of Chapter IV Section C (paragraph 37). The historical paragraph text has been checked against secondary source archives and marked for audit.";
-        baselineBadge.innerText = "204MD.pdf (Consolidated)";
-        amendedBadge.innerText = "Notification Id: 13741";
-        
-        baselineBox.innerHTML = `
-          <div class="font-bold text-slate-900">Chapter IV, Section C: Limits for Non-Option Derivative Contracts</div>
-          <div class="p-2 border border-rose-200 bg-rose-100/50 rounded">
-            <span class="diff-del font-semibold">37. Limits for Non-Option Derivative Contracts:</span><br/>
-            <span class="diff-del">The gross PV 01 of all non-option rupee derivative contracts (including rupee - foreign currency contracts) of a bank shall be within 0.25 per cent of its net worth as on the last balance sheet date. The limit shall, however, exclude the PV 01 of derivatives which are hedges for balance sheet exposures...</span>
-          </div>
-        `;
+          document.getElementById('header-doc-count').innerText = `${data.documents} Documents`;
+          document.getElementById('header-chunk-count').innerText = `${data.qdrant_points} Chunks`;
 
-        amendedBox.innerHTML = `
-          <div class="font-bold text-slate-900">Chapter IV, Section C: Amended Text</div>
-          <div class="p-2 border border-emerald-200 bg-emerald-50 rounded">
-            <span class="diff-add">4. Section C on 'Limits for Non-Option Derivative Contracts' of Chapter IV of the Directions (paragraph 37) stands deleted.</span>
-          </div>
-          <div class="text-slate-500 text-[11px] italic mt-2">
-            * Operative rule effective immediately upon issuance (2026-10-19).
-          </div>
-        `;
-
-        evidenceBox.innerText = `(ii) The amended instructions shall come into effect immediately upon issuance.\n4. Section C on "Limits for Non-Option Derivative Contracts" of Chapter IV of the Reserve Bank of India (Small Finance Banks - Miscellaneous) Directions, 2025 (paragraph 37 of the Directions) stands deleted.`;
-      } else if (type === 'sanctions-uapa') {
-        statusText.innerText = "Sanctions list modifications under UAPA 1967 (UNSC 1267/1989 Committee). Visual strikethrough verified from Page 2.";
-        baselineBadge.innerText = "UN Sanctions Register (Prior)";
-        amendedBadge.innerText = "RBI Circular Id: 13742";
-
-        baselineBox.innerHTML = `
-          <div class="font-bold text-slate-900">Individual QDi.082: MOUNIR EL MOTASSADEQ</div>
-          <div class="p-2 border border-rose-200 bg-rose-50 rounded">
-            Address: <span class="diff-del">(In prison in Germany)</span>
-          </div>
-          <div class="font-bold text-slate-900 mt-3">Entity QDe.132: TEHRIK-E TALIBAN PAKISTAN (TTP)</div>
-          <div class="p-2 border border-rose-200 bg-rose-50 rounded">
-            Leader: <span class="diff-del">Maulana Fazlullah (QDi.352)</span>, Noor Wali Mehsud (QDi.427)
-          </div>
-        `;
-
-        amendedBox.innerHTML = `
-          <div class="font-bold text-slate-900">Individual QDi.082: MOUNIR EL MOTASSADEQ</div>
-          <div class="p-2 border border-emerald-200 bg-emerald-50 rounded">
-            Address: <span class="diff-add">Marrakesh, Morocco</span>
-          </div>
-          <div class="font-bold text-slate-900 mt-3">Entity QDe.132: TEHRIK-E TALIBAN PAKISTAN (TTP)</div>
-          <div class="p-2 border border-emerald-200 bg-emerald-50 rounded">
-            Leader: <span class="diff-add">Noor Wali Mehsud (QDi.427)</span> [Fazlullah deleted]
-          </div>
-        `;
-
-        evidenceBox.innerText = `Page 2, QDi.082 entry: the address text '(In prison in Germany)' is struck through; 'Marrakesh, Morocco' appears as the address.\nPage 2, QDe.132 entry: 'Maulana Fazlullah (QDi.352)' is struck through.`;
-      } else {
-        statusText.innerText = "Commercial Banks Miscellaneous Second Amendment Directions 2026. General banking provisions updated.";
-        baselineBadge.innerText = "Commercial Banks Baseline";
-        amendedBadge.innerText = "Circular Id: 13740";
-
-        baselineBox.innerHTML = `<div class="p-3 text-slate-600">Prior provisions for commercial banking regulatory operations.</div>`;
-        amendedBox.innerHTML = `<div class="p-3 text-slate-800 font-semibold text-emerald-800 bg-emerald-50">Second Amendment Instructions effective October 19, 2026.</div>`;
-        evidenceBox.innerText = `Commercial Banks (Miscellaneous) Second Amendment Directions, 2026 published by Department of Regulation on 2026-10-19.`;
+          // Recent docs table
+          if (data.recent_documents) {
+            renderRecentDocsTable(data.recent_documents);
+          }
+        }
+      } catch (e) {
+        console.warn("Could not load /api/stats", e);
       }
-
-      renderAllIcons();
     }
 
-    function renderDocumentsTable(docs) {
-      const tbody = document.getElementById('documents-tbody');
-      tbody.innerHTML = docs.map(doc => `
+    function renderRecentDocsTable(docs) {
+      const tbody = document.getElementById('dash-recent-tbody');
+      tbody.innerHTML = docs.map(d => `
         <tr class="hover:bg-slate-50 transition-colors">
-          <td class="px-4 py-3 font-mono font-bold text-slate-900">${doc.id}</td>
-          <td class="px-4 py-3">
-            <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-mono font-medium">${doc.regulator}</span>
-          </td>
+          <td class="px-4 py-3 font-mono font-bold text-slate-800">${d.id}</td>
           <td class="px-4 py-3 font-medium text-slate-900 max-w-md">
-            <div>${doc.title}</div>
-            <a href="${doc.source_url}" target="_blank" class="text-[11px] text-indigo-600 hover:underline inline-flex items-center space-x-1 mt-0.5">
-              <span>Official RBI Link</span>
-              <span data-icon="external-link" class="w-3 h-3"></span>
-            </a>
+            <div>${d.title}</div>
+            ${d.source_url ? `<a href="${d.source_url}" target="_blank" class="text-[11px] text-blue-600 hover:underline inline-flex items-center space-x-1 mt-0.5"><span>View source</span><span data-icon="external-link" class="w-2.5 h-2.5"></span></a>` : ''}
           </td>
-          <td class="px-4 py-3 text-slate-600 font-mono">${doc.publication_date || '—'}</td>
-          <td class="px-4 py-3 text-slate-600 font-mono">${doc.effective_date || '—'}</td>
-          <td class="px-4 py-3 font-mono">
-            <span class="bg-slate-100 px-2 py-0.5 rounded text-slate-700">${doc.version || 'v1.0'}</span>
-          </td>
-          <td class="px-4 py-3 text-right space-x-2">
-            <button onclick="setPrompt('Analyze regulatory document: ${doc.title.replace(/'/g, "\\'")}')" class="text-indigo-600 hover:text-indigo-800 font-medium">
-              Analyze
+          <td class="px-4 py-3 font-mono text-slate-600">${d.publication_date || '—'}</td>
+          <td class="px-4 py-3 font-mono text-slate-600">${d.effective_date || '—'}</td>
+          <td class="px-4 py-3 font-mono"><span class="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-semibold">${d.version || 'v1.0'}</span></td>
+          <td class="px-4 py-3 text-right">
+            <button onclick="setPrompt('Analyze regulatory document: ${d.title.replace(/'/g, "\\'")}')" class="text-blue-600 hover:text-blue-800 font-semibold">
+              Analyze AI &rarr;
             </button>
           </td>
         </tr>
       `).join('');
-
-      document.getElementById('header-doc-count').innerText = `${docs.length} Documents`;
-      renderAllIcons();
+      renderIcons();
     }
 
-    function filterDocumentsTable() {
-      const q = document.getElementById('doc-filter-input').value.toLowerCase();
-      const filtered = SAMPLE_DOCUMENTS.filter(d => 
-        d.title.toLowerCase().includes(q) || 
-        d.regulator.toLowerCase().includes(q) || 
+    async function loadDocumentsList() {
+      try {
+        const res = await fetch('/api/documents');
+        if (res.ok) {
+          globalDocuments = await res.json();
+          renderAllDocsTable(globalDocuments);
+        }
+      } catch (e) {
+        console.warn("Could not load /api/documents", e);
+      }
+    }
+
+    function renderAllDocsTable(docs) {
+      const tbody = document.getElementById('all-docs-tbody');
+      tbody.innerHTML = docs.map(d => `
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="px-4 py-3 font-mono font-bold text-slate-800">${d.id}</td>
+          <td class="px-4 py-3 font-medium"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-mono font-medium">${d.regulator}</span></td>
+          <td class="px-4 py-3 font-medium text-slate-900 max-w-md">
+            <div>${d.title}</div>
+            ${d.source_url ? `<a href="${d.source_url}" target="_blank" class="text-[11px] text-blue-600 hover:underline inline-flex items-center space-x-1 mt-0.5"><span>Source link</span><span data-icon="external-link" class="w-2.5 h-2.5"></span></a>` : ''}
+          </td>
+          <td class="px-4 py-3 font-mono text-slate-600">${d.publication_date || '—'}</td>
+          <td class="px-4 py-3 font-mono text-slate-600">${d.effective_date || '—'}</td>
+          <td class="px-4 py-3 font-mono"><span class="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-semibold">${d.version || 'v1.0'}</span></td>
+          <td class="px-4 py-3 text-right">
+            <button onclick="setPrompt('Analyze directives in: ${d.title.replace(/'/g, "\\'")}')" class="text-blue-600 hover:text-blue-800 font-semibold">
+              Ask AI
+            </button>
+          </td>
+        </tr>
+      `).join('');
+      renderIcons();
+    }
+
+    function filterDocsTable() {
+      const q = document.getElementById('doc-search-input').value.toLowerCase();
+      const filtered = globalDocuments.filter(d =>
+        d.title.toLowerCase().includes(q) ||
+        d.regulator.toLowerCase().includes(q) ||
         String(d.id).includes(q)
       );
-      renderDocumentsTable(filtered);
+      renderAllDocsTable(filtered);
     }
 
-    function renderChangeEvents(events) {
-      const container = document.getElementById('change-events-container');
-      container.innerHTML = events.map(evt => `
-        <div class="border border-slate-200 rounded-lg p-5 bg-white space-y-3 shadow-sm hover:border-slate-300 transition-all">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-            <div class="flex items-center space-x-2">
-              <span class="px-2 py-0.5 rounded text-[11px] font-bold uppercase font-mono ${
-                evt.change_type === 'deletion' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
-              }">${evt.change_type}</span>
-              <span class="font-bold text-slate-900 text-sm">${evt.title}</span>
-            </div>
-            <div class="text-xs text-slate-500 font-mono">
-              Effective: ${evt.effective_date}
-            </div>
-          </div>
+    async function loadChangeEvents() {
+      try {
+        const res = await fetch('/api/change-events');
+        if (res.ok) {
+          const events = await res.json();
+          const container = document.getElementById('changes-container');
+          container.innerHTML = events.map(evt => `
+            <div class="border border-slate-200 rounded-lg p-5 bg-white space-y-3 shadow-xs">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2">
+                  <span class="px-2 py-0.5 rounded text-[11px] font-bold uppercase font-mono ${evt.change_type === 'deletion' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
+            }">${evt.change_type}</span>
+                  <span class="font-bold text-slate-900 text-sm">${evt.title}</span>
+                </div>
+                <div class="text-xs text-slate-500 font-mono">Effective: ${evt.effective_date}</div>
+              </div>
 
-          <div class="text-xs text-slate-700 font-medium">
-            <span class="text-slate-400">Provision:</span> ${evt.provision}
-          </div>
+              <div class="text-xs text-slate-700 font-medium">
+                <span class="text-slate-400">Target Provision:</span> ${evt.provision}
+              </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
-            <div class="p-3 rounded bg-rose-50/50 border border-rose-200">
-              <div class="font-bold text-rose-800 mb-1">Previous Text / Clause:</div>
-              <div class="text-slate-700">${evt.old_text}</div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                <div class="p-3 rounded bg-rose-50/50 border border-rose-200">
+                  <div class="font-bold text-rose-800 mb-1">Previous Provision:</div>
+                  <div class="text-slate-700">${evt.old_text}</div>
+                </div>
+                <div class="p-3 rounded bg-emerald-50/50 border border-emerald-200">
+                  <div class="font-bold text-emerald-800 mb-1">Amended Status:</div>
+                  <div class="text-slate-700">${evt.new_text}</div>
+                </div>
+              </div>
+
+              <div class="p-3 bg-slate-50 rounded border border-slate-200 text-xs space-y-1">
+                <div class="font-semibold text-slate-800">Provenance Audit:</div>
+                <p class="text-slate-600 font-sans">${evt.provenance}</p>
+              </div>
             </div>
-            <div class="p-3 rounded bg-emerald-50/50 border border-emerald-200">
-              <div class="font-bold text-emerald-800 mb-1">Amended Posture:</div>
-              <div class="text-slate-700">${evt.new_text}</div>
-            </div>
-          </div>
-
-          <div class="p-3 bg-slate-50 rounded border border-slate-200 text-xs space-y-1">
-            <div class="font-semibold text-slate-800 flex items-center space-x-1.5">
-              <span data-icon="shield-alert" class="w-3.5 h-3.5 text-indigo-600"></span>
-              <span>Provenance & Audit Status:</span>
-            </div>
-            <p class="text-slate-600 font-sans">${evt.provenance}</p>
-          </div>
-        </div>
-      `).join('');
-
-      renderAllIcons();
-    }
-
-    async function loadLiveBackendData() {
-      if (!window.location.protocol.startsWith('http')) {
-        return;
+          `).join('');
+          renderIcons();
+        }
+      } catch (e) {
+        console.warn("Could not load /api/change-events", e);
       }
-
-      const fetchWithTimeout = async (url, ms = 800) => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), ms);
-        try {
-          const res = await fetch(url, { signal: controller.signal });
-          clearTimeout(timer);
-          return res;
-        } catch (e) {
-          clearTimeout(timer);
-          return null;
-        }
-      };
-
-      try {
-        const docRes = await fetchWithTimeout('/api/documents');
-        if (docRes && docRes.ok) {
-          const docs = await docRes.json();
-          if (docs && docs.length > 0) renderDocumentsTable(docs);
-        }
-      } catch (e) {}
-
-      try {
-        const eventsRes = await fetchWithTimeout('/api/change-events');
-        if (eventsRes && eventsRes.ok) {
-          const events = await eventsRes.json();
-          if (events && events.length > 0) renderChangeEvents(events);
-        }
-      } catch (e) {}
     }
 
-    // Initialize immediately without waiting for any external network script
-    window.addEventListener('DOMContentLoaded', () => {
-      renderDocumentsTable(SAMPLE_DOCUMENTS);
-      renderChangeEvents(SAMPLE_CHANGE_EVENTS);
-      renderDiffSelection();
-      renderAllIcons();
-      loadLiveBackendData();
+    async function runTemporalAudit() {
+      const date = document.getElementById('temporal-audit-date').value;
+      const container = document.getElementById('temporal-results-container');
+      if (!date) return;
 
-      // Render default SFB query result
-      renderQueryResult(KNOWLEDGE_RESPONSES["sfb-latest"]);
+      container.innerHTML = `<div class="p-4 bg-slate-50 text-xs">Evaluating regulatory state as of ${date}...</div>`;
+
+      try {
+        const res = await fetch(`/api/temporal?as_of_date=${date}`);
+        if (res.ok) {
+          const data = await res.json();
+          container.innerHTML = `
+            <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900 space-y-1">
+              <div class="font-bold">Temporal Audit Summary (As of ${data.as_of_date}):</div>
+              <p>${data.summary}</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div class="border border-slate-200 rounded-lg p-4 bg-white space-y-2">
+                <div class="font-bold text-emerald-800 flex items-center justify-between border-b pb-2">
+                  <span>Directives In Force on ${data.as_of_date}</span>
+                  <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-mono">${data.active_documents.length} Active</span>
+                </div>
+                <ul class="space-y-1.5 divide-y divide-slate-100 pt-1">
+                  ${data.active_documents.map(d => `
+                    <li class="pt-1.5 flex justify-between items-start">
+                      <span class="text-slate-800 font-medium">${d.title}</span>
+                      <span class="text-slate-500 font-mono text-[10px] shrink-0 ml-2">Pub: ${d.publication_date}</span>
+                    </li>
+                  `).join('')}
+                </ul>
+              </div>
+
+              <div class="border border-slate-200 rounded-lg p-4 bg-white space-y-2">
+                <div class="font-bold text-slate-700 flex items-center justify-between border-b pb-2">
+                  <span>Enacted After ${data.as_of_date}</span>
+                  <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono">${data.future_documents.length} Future</span>
+                </div>
+                <ul class="space-y-1.5 divide-y divide-slate-100 pt-1">
+                  ${data.future_documents.map(d => `
+                    <li class="pt-1.5 flex justify-between items-start">
+                      <span class="text-slate-800 font-medium">${d.title}</span>
+                      <span class="text-amber-700 font-mono text-[10px] shrink-0 ml-2">Pub: ${d.publication_date}</span>
+                    </li>
+                  `).join('')}
+                </ul>
+              </div>
+            </div>
+          `;
+        }
+      } catch (e) {
+        container.innerHTML = `<div class="p-4 bg-rose-50 text-rose-800 text-xs">Error running temporal audit: ${e.message}</div>`;
+      }
+    }
+
+    async function runCompare() {
+      const preset = document.getElementById('compare-preset').value;
+      const summaryBox = document.getElementById('compare-summary-box');
+      const leftLabel = document.getElementById('diff-left-label');
+      const rightLabel = document.getElementById('diff-right-label');
+      const leftContent = document.getElementById('diff-left-content');
+      const rightContent = document.getElementById('diff-right-content');
+
+      summaryBox.textContent = 'Loading comparison summary from the backend…';
+      leftLabel.textContent = 'Historical baseline';
+      rightLabel.textContent = 'Official amendment';
+      leftContent.innerHTML = '<p class="text-slate-600">The original historical wording is not displayed here unless it has been independently verified against an official prior-version source.</p>';
+      rightContent.innerHTML = '<p class="font-semibold text-emerald-800">RBI amendment notification 13741 states that paragraph 37 (Section C, Chapter IV: “Limits for Non-Option Derivative Contracts”) stands deleted. The amendment states that the instructions take effect immediately upon issuance.</p>';
+
+      try {
+        const res = await fetch('/api/compare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ preset_key: preset })
+        });
+        if (!res.ok) throw new Error(`Comparison API returned ${res.status}`);
+        const data = await res.json();
+        summaryBox.textContent = data.summary || 'The backend did not return a comparison summary.';
+      } catch (e) {
+        summaryBox.textContent = `Could not load comparison: ${e.message}`;
+      }
+    }
+
+    // Initialize application on load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderIcons();
+      loadDashboardStats();
+      loadDocumentsList();
+      loadChangeEvents();
+      runCompare();
     });
+
+  </script>
+  <script>
+    // Small navigation enhancement for the redesigned shell.
+    const originalSwitchTab = switchTab;
+    switchTab = function (tabKey) {
+      originalSwitchTab(tabKey);
+      document.querySelectorAll('.nav-tab').forEach(button => button.classList.remove('active'));
+      const active = document.getElementById(`nav-${tabKey}`);
+      if (active) active.classList.add('active');
+      const labels = { dashboard: 'Overview', ask: 'Banking AI Assistant', documents: 'Knowledge Library', changes: 'Policy Updates', temporal: 'Point-in-time Review', compare: 'Compare Versions', status: 'Platform Info' };
+      document.getElementById('current-view-label').textContent = labels[tabKey] || 'Workspace';
+    };
+    // Keep the navigation state in sync on first render.
+    document.getElementById('current-view-label').textContent = 'Overview';
   </script>
 </body>
+
 </html>
