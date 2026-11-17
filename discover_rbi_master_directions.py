@@ -75,9 +75,9 @@ def extract_detail_publication_date(detail_url):
         lines = [x for x in lines if x]
 
         # Prefer the short header region immediately after the RBI reference.
-        for i, line in enumerate(lines[:100]):
+        for i, line in enumerate(lines[:160]):
             if re.search(r"\bRBI\s*/", line, re.I):
-                header = " ".join(lines[i:i + 5])
+                header = " ".join(lines[i:i + 8])
                 iso, raw = parse_date_text(header)
                 if iso:
                     return iso, raw, "detail_header"
@@ -147,18 +147,29 @@ def discover_master_directions():
 
     # Listing rows often have no dates. Enrich from each official detail page.
     # Four concurrent requests keep this reasonably quick without a large burst.
-    needs_detail_date = [r for r in records if not r["publication_date"]]
+    # Verify dates from official detail pages, even when the listing has a date.
+    needs_detail_date = records
     with ThreadPoolExecutor(max_workers=4) as pool:
         futures = {pool.submit(extract_detail_publication_date, r["detail_url"]): r
                    for r in needs_detail_date}
         for future in as_completed(futures):
             record = futures[future]
             iso, raw, status = future.result()
+            record["date_extraction_status"] = status
+
             if iso:
                 record["publication_date"] = iso
                 record["publication_date_raw"] = raw
-                record["publication_date_source_row"] = status
-            record["date_extraction_status"] = status
+
+                if status == "detail_header":
+                    record["publication_date_source"] = "document_header"
+                else:
+                    record["publication_date_source"] = "detail_header_fallback_review"
+            else:
+                # Preserve listing provenance, but do not treat it as verified.
+                record["publication_date_source"] = (
+                    record.get("publication_date_source_row") or status
+                )
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     payload = {
