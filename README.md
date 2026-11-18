@@ -241,46 +241,57 @@ The following is a logical overview of the major project modules. Supporting scr
 
 ## Project Structure
 
-```mermaid
-flowchart TD
-    A["ArthaOne Project"]
-
-    A --> B["Core Application"]
-    A --> C["Data Collection"]
-    A --> D["Document Indexing"]
-    A --> E["Temporal Intelligence"]
-    A --> F["Testing & Storage"]
-    A --> G["Frontend"]
-
-    B --> B1["main.py"]
-    B --> B2["search_circular.py"]
-    B --> B3["metadata_db.py"]
-
-    C --> C1["run_rbi_pipeline.py"]
-    C --> C2["discover_*.py"]
-    C --> C3["download_*.py"]
-
-    D --> D1["index_one_document.py"]
-    D --> D2["extract_text.py"]
-
-    E --> E1["compare_versions.py"]
-    E --> E2["sync_qdrant_dates.py"]
-    E --> E3["record_change_event.py"]
-
-    F --> F1["test_regulatory_rag.py"]
-    F --> F2["data/"]
-    F2 --> F3["PDFs, SQLite & JSON"]
-
-    G --> G1["HTML / JavaScript / Streamlit"]
-
-    classDef root fill:#17365d,stroke:#17365d,color:#ffffff
-    classDef group fill:#e8f1ff,stroke:#3973ac,color:#17365d
-    classDef file fill:#f7f9fc,stroke:#8295a8,color:#263746
-
-    class A root
-    class B,C,D,E,F,G group
-    class B1,B2,B3,C1,C2,C3,D1,D2,E1,E2,E3,F1,F2,F3,G1 file
+```text
+ArthaOne/
+│
+├── main.py
+├── search_circular.py
+├── metadata_db.py
+│
+├── Data Collection/
+│   ├── run_rbi_pipeline.py
+│   ├── discover_rbi_master_directions.py
+│   ├── discover_regulations.py
+│   ├── download_regulations.py
+│   └── download_one_circular.py
+│
+├── Document Processing/
+│   ├── index_one_document.py
+│   └── extract_text.py
+│
+├── Temporal Intelligence/
+│   ├── compare_versions.py
+│   ├── sync_qdrant_dates.py
+│   └── record_change_event.py
+│
+├── Testing/
+│   └── test_regulatory_rag.py
+│
+├── data/
+│   ├── Regulatory PDFs
+│   ├── SQLite Database
+│   └── JSON Metadata
+│
+├── Frontend/
+│   └── User Interface Files
+│
+├── .env.example
+├── requirements.txt
+└── README.md
 ```
+
+### Module Overview
+
+| Module | Purpose |
+|---|---|
+| Core Application | Backend, RAG engine and database operations |
+| Data Collection | Discovering and downloading regulatory documents |
+| Document Processing | Extracting PDF text, generating embeddings and indexing |
+| Temporal Intelligence | Version comparison and date synchronization |
+| Testing | Automated testing of RAG functionality |
+| Data | Regulatory documents and stored metadata |
+| Frontend | User interface |
+
 
 The project is organized into functional modules covering backend development, regulatory data collection, document indexing, temporal intelligence, testing, storage, and frontend development.
 
