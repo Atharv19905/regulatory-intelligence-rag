@@ -116,45 +116,54 @@ ArthaOne follows a modular architecture consisting of data collection, document 
 
 ## System Architecture
 
+## System Architecture
+
 ```mermaid
 flowchart TD
-    A["Regulatory Sources (RBI)"]
-    B["Data Collection Pipeline<br/>run_rbi_pipeline.py"]
-    C["SQLite Database<br/>metadata_db.py"]
-    D["PDF Processing & Embeddings<br/>index_one_document.py"]
-    E[("Qdrant Vector Database")]
-    
-    F["User Query"]
-    G["FastAPI Backend<br/>main.py"]
-    H["RAG Engine<br/>search_circular.py"]
-    I["Semantic Retrieval +<br/>Temporal Filtering"]
-    J["LLM Answer Generation<br/>Groq / Gemini"]
-    K["Citation & Grounding Validation"]
-    L["Final Answer / Frontend"]
+    A["RBI Regulatory Sources"]
 
-    A --> B --> C
-    B --> D --> E
+    subgraph INGESTION["Document Ingestion Pipeline"]
+        B["run_rbi_pipeline.py"]
+        C["PDF Download & Validation"]
+        D["metadata_db.py"]
+        E[("SQLite Database")]
+        F["index_one_document.py"]
+        G["PDF Extraction & Chunking"]
+        H["Sentence Transformers"]
+        I[("Qdrant Vector Database")]
 
-    F --> G --> H
-    C --> H
-    E --> I
-    H --> I
-    I --> J --> K --> L
+        A --> B --> C --> D --> E
+        C --> F --> G --> H --> I
+    end
 
-    M["Version Comparison<br/>compare_versions.py"]
-    N["Date Synchronization<br/>sync_qdrant_dates.py"]
+    subgraph QUERY["User Query Processing"]
+        J["User Query"]
+        K["main.py<br/>FastAPI"]
+        L["search_circular.py<br/>RAG Engine"]
+        M["Semantic Retrieval"]
+        N["Temporal Filtering"]
+        O["Relevant Regulatory Context"]
+        P["Groq / Gemini"]
+        Q["Citation & Grounding Checks"]
+        R["Response to User"]
 
-    C -.-> M
-    C -.-> N
-    N -.-> E
+        J --> K --> L --> M --> N --> O --> P --> Q --> R
+    end
 
-    classDef db fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
-    classDef process fill:#e8f1ff,stroke:#3973ac,color:#17365d
-    classDef ai fill:#f1eaff,stroke:#8054b5,color:#45236b
+    E --> L
+    I --> M
+    E --> N
 
-    class C,E db
-    class A,B,D,F,G,H,I,M,N process
-    class J,K,L ai
+    subgraph SUPPORT["Supporting Workflows"]
+        S["compare_versions.py"]
+        T["sync_qdrant_dates.py"]
+        U["record_change_event.py"]
+        V["test_regulatory_rag.py"]
+    end
+
+    E -.-> S
+    E -.-> T
+    T -.-> I
 ```
 
 The architecture separates regulatory data collection and indexing from user-query processing. SQLite stores document metadata, while Qdrant stores vector embeddings. The RAG engine combines both to generate temporally relevant, evidence-supported answers.
