@@ -126,6 +126,11 @@ flowchart TD
     D["PDF Processing & Embeddings"]
     E[("Qdrant Vector DB")]
 
+    A --> B --> C
+    B --> D --> E
+
+    C <-->|"Date Synchronization<br/>sync_qdrant_dates.py"| E
+
     F["User Query"] --> G["FastAPI Backend"]
     G --> H["RAG Engine"]
     C --> H
@@ -134,10 +139,9 @@ flowchart TD
     I --> J["Groq / Gemini"]
     J --> K["Citation & Grounding Checks"]
     K --> L["Final Answer"]
-
-    A --> B --> C
-    B --> D --> E
 ```
+
+
 
 **Supporting modules:** `compare_versions.py` – document comparison; `sync_qdrant_dates.py` – date synchronization; `test_regulatory_rag.py` – automated testing.
 
