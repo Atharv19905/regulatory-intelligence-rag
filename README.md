@@ -114,69 +114,50 @@ ArthaOne aims to address these challenges through semantic retrieval, temporal f
 ArthaOne follows a modular architecture consisting of data collection, document processing, metadata management, vector indexing, retrieval, temporal filtering, and AI-based answer generation.
 ## System Architecture
 
+## System Architecture
+
 ```mermaid
-flowchart TB
-    A["Regulatory Sources<br/>RBI and Financial Authorities"]
+flowchart TD
+    A["Regulatory Sources (RBI)"]
+    B["Data Collection Pipeline<br/>run_rbi_pipeline.py"]
+    C["SQLite Database<br/>metadata_db.py"]
+    D["PDF Processing & Embeddings<br/>index_one_document.py"]
+    E[("Qdrant Vector Database")]
+    
+    F["User Query"]
+    G["FastAPI Backend<br/>main.py"]
+    H["RAG Engine<br/>search_circular.py"]
+    I["Semantic Retrieval +<br/>Temporal Filtering"]
+    J["LLM Answer Generation<br/>Groq / Gemini"]
+    K["Citation & Grounding Validation"]
+    L["Final Answer / Frontend"]
 
-    subgraph DATA["1. Regulatory Data Collection"]
-        B["run_rbi_pipeline.py"]
-        C["Discover, Download<br/>& Validate PDFs"]
-        D["metadata_db.py"]
-        E[("SQLite Database<br/>Documents, Versions & Dates")]
-        A --> B --> C --> D --> E
-    end
+    A --> B --> C
+    B --> D --> E
 
-    subgraph INDEX["2. Document Processing & Indexing"]
-        F["index_one_document.py"]
-        G["PDF Text Extraction<br/>PyMuPDF"]
-        H["Text Chunking"]
-        I["Sentence Transformers<br/>all-MiniLM-L6-v2"]
-        J[("Qdrant Vector Database<br/>Embeddings + Metadata")]
-        C --> F --> G --> H --> I --> J
-    end
+    F --> G --> H
+    C --> H
+    E --> I
+    H --> I
+    I --> J --> K --> L
 
-    subgraph QUERY["3. Query Processing & RAG"]
-        K["User Query"]
-        L["FastAPI Backend<br/>main.py"]
-        M["RAG Engine<br/>search_circular.py"]
-        N["Semantic Retrieval"]
-        O["Temporal Filtering<br/>Publication & Effective Dates"]
-        P["Relevant Regulatory Passages"]
-        Q["LLM Answer Generation<br/>Groq / Gemini"]
-        R["Citation & Grounding Validation"]
-        S["Final Answer"]
-        K --> L --> M --> N --> O --> P --> Q --> R --> S
-    end
+    M["Version Comparison<br/>compare_versions.py"]
+    N["Date Synchronization<br/>sync_qdrant_dates.py"]
 
-    E --> M
-    J --> N
-    E --> O
+    C -.-> M
+    C -.-> N
+    N -.-> E
 
-    subgraph SUPPORT["4. Supporting Workflows"]
-        T["compare_versions.py<br/>PDF Version Comparison"]
-        U["sync_qdrant_dates.py<br/>Temporal Metadata Sync"]
-        V["record_change_event.py<br/>Specialised Change Events"]
-        W["test_regulatory_rag.py<br/>Automated Testing"]
-    end
+    classDef db fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
+    classDef process fill:#e8f1ff,stroke:#3973ac,color:#17365d
+    classDef ai fill:#f1eaff,stroke:#8054b5,color:#45236b
 
-    E --> T
-    E --> U
-    U --> J
-    T -.-> V
-
-    S --> X["Frontend / User Interface"]
-
-    classDef source fill:#e8f1ff,stroke:#3973ac,color:#17365d
-    classDef database fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
-    classDef processing fill:#fff3df,stroke:#d18b25,color:#704600
-    classDef output fill:#f1eaff,stroke:#8054b5,color:#45236b
-
-    class A,K source
-    class E,J database
-    class B,C,D,F,G,H,I,L,M,N,O,P,T,U,V,W processing
-    class Q,R,S,X output
+    class C,E db
+    class A,B,D,F,G,H,I,M,N process
+    class J,K,L ai
 ```
 
+The architecture separates regulatory data collection and indexing from user-query processing. SQLite stores document metadata, while Qdrant stores vector embeddings. The RAG engine combines both to generate temporally relevant, evidence-supported answers.
 **Architecture overview:** SQLite manages structured regulatory metadata, while Qdrant stores vector embeddings and associated payloads. The RAG engine combines both sources to retrieve relevant regulatory evidence, apply temporal filters, and generate validated, reference-supported answers.
 
 ## Technology Stack
@@ -258,54 +239,50 @@ The following is a logical overview of the major project modules. Supporting scr
 
 ## Project Structure
 
+## Project Structure
+
 ```mermaid
-flowchart TB
-    ROOT["ArthaOne<br/>regulatory-intelligence/"]
+flowchart TD
+    A["ArthaOne Project"]
 
-    ROOT --> CORE["Core Application"]
-    ROOT --> DATA["Data Collection"]
-    ROOT --> PROCESS["Document Processing"]
-    ROOT --> TEMPORAL["Temporal Intelligence"]
-    ROOT --> TEST["Testing"]
-    ROOT --> STORAGE["Data & Storage"]
-    ROOT --> UI["Frontend"]
+    A --> B["Core Application"]
+    A --> C["Data Collection"]
+    A --> D["Document Indexing"]
+    A --> E["Temporal Intelligence"]
+    A --> F["Testing & Storage"]
+    A --> G["Frontend"]
 
-    CORE --> A["main.py<br/>FastAPI Backend"]
-    CORE --> B["search_circular.py<br/>Core RAG Engine"]
-    CORE --> C["metadata_db.py<br/>SQLite Operations"]
+    B --> B1["main.py"]
+    B --> B2["search_circular.py"]
+    B --> B3["metadata_db.py"]
 
-    DATA --> D["run_rbi_pipeline.py"]
-    DATA --> E["discover_rbi_master_directions.py"]
-    DATA --> F["discover_regulations.py"]
-    DATA --> G["download_regulations.py"]
-    DATA --> H["download_one_circular.py"]
+    C --> C1["run_rbi_pipeline.py"]
+    C --> C2["discover_*.py"]
+    C --> C3["download_*.py"]
 
-    PROCESS --> I["index_one_document.py"]
-    PROCESS --> J["extract_text.py"]
+    D --> D1["index_one_document.py"]
+    D --> D2["extract_text.py"]
 
-    TEMPORAL --> K["compare_versions.py"]
-    TEMPORAL --> L["sync_qdrant_dates.py"]
-    TEMPORAL --> M["record_change_event.py"]
+    E --> E1["compare_versions.py"]
+    E --> E2["sync_qdrant_dates.py"]
+    E --> E3["record_change_event.py"]
 
-    TEST --> N["test_regulatory_rag.py"]
+    F --> F1["test_regulatory_rag.py"]
+    F --> F2["data/"]
+    F2 --> F3["PDFs, SQLite & JSON"]
 
-    STORAGE --> O["data/"]
-    O --> P["Regulatory PDFs"]
-    O --> Q["SQLite Database"]
-    O --> R["Discovery & Metadata JSON"]
-
-    UI --> S["Frontend Application<br/>HTML / JavaScript / Streamlit"]
+    G --> G1["HTML / JavaScript / Streamlit"]
 
     classDef root fill:#17365d,stroke:#17365d,color:#ffffff
     classDef group fill:#e8f1ff,stroke:#3973ac,color:#17365d
     classDef file fill:#f7f9fc,stroke:#8295a8,color:#263746
-    classDef storage fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
 
-    class ROOT root
-    class CORE,DATA,PROCESS,TEMPORAL,TEST,STORAGE,UI group
-    class A,B,C,D,E,F,G,H,I,J,K,L,M,N,S file
-    class O,P,Q,R storage
+    class A root
+    class B,C,D,E,F,G group
+    class B1,B2,B3,C1,C2,C3,D1,D2,E1,E2,E3,F1,F2,F3,G1 file
 ```
+
+The project is organized into functional modules covering backend development, regulatory data collection, document indexing, temporal intelligence, testing, storage, and frontend development.
 
 ### Main module responsibilities
 
