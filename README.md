@@ -121,50 +121,25 @@ ArthaOne follows a modular architecture consisting of data collection, document 
 ```mermaid
 flowchart TD
     A["RBI Regulatory Sources"]
+    B["Data Collection & Registration"]
+    C[("SQLite Metadata DB")]
+    D["PDF Processing & Embeddings"]
+    E[("Qdrant Vector DB")]
 
-    subgraph INGESTION["Document Ingestion Pipeline"]
-        B["run_rbi_pipeline.py"]
-        C["PDF Download & Validation"]
-        D["metadata_db.py"]
-        E[("SQLite Database")]
-        F["index_one_document.py"]
-        G["PDF Extraction & Chunking"]
-        H["Sentence Transformers"]
-        I[("Qdrant Vector Database")]
+    F["User Query"] --> G["FastAPI Backend"]
+    G --> H["RAG Engine"]
+    C --> H
+    E --> H
+    H --> I["Semantic & Temporal Retrieval"]
+    I --> J["Groq / Gemini"]
+    J --> K["Citation & Grounding Checks"]
+    K --> L["Final Answer"]
 
-        A --> B --> C --> D --> E
-        C --> F --> G --> H --> I
-    end
-
-    subgraph QUERY["User Query Processing"]
-        J["User Query"]
-        K["main.py<br/>FastAPI"]
-        L["search_circular.py<br/>RAG Engine"]
-        M["Semantic Retrieval"]
-        N["Temporal Filtering"]
-        O["Relevant Regulatory Context"]
-        P["Groq / Gemini"]
-        Q["Citation & Grounding Checks"]
-        R["Response to User"]
-
-        J --> K --> L --> M --> N --> O --> P --> Q --> R
-    end
-
-    E --> L
-    I --> M
-    E --> N
-
-    subgraph SUPPORT["Supporting Workflows"]
-        S["compare_versions.py"]
-        T["sync_qdrant_dates.py"]
-        U["record_change_event.py"]
-        V["test_regulatory_rag.py"]
-    end
-
-    E -.-> S
-    E -.-> T
-    T -.-> I
+    A --> B --> C
+    B --> D --> E
 ```
+
+**Supporting modules:** `compare_versions.py` – document comparison; `sync_qdrant_dates.py` – date synchronization; `test_regulatory_rag.py` – automated testing.
 
 The architecture separates regulatory data collection and indexing from user-query processing. SQLite stores document metadata, while Qdrant stores vector embeddings. The RAG engine combines both to generate temporally relevant, evidence-supported answers.
 **Architecture overview:** SQLite manages structured regulatory metadata, while Qdrant stores vector embeddings and associated payloads. The RAG engine combines both sources to retrieve relevant regulatory evidence, apply temporal filters, and generate validated, reference-supported answers.
