@@ -112,11 +112,6 @@ ArthaOne aims to address these challenges through semantic retrieval, temporal f
 ## System Architecture
 
 ArthaOne follows a modular architecture consisting of data collection, document processing, metadata management, vector indexing, retrieval, temporal filtering, and AI-based answer generation.
-## System Architecture
-
-## System Architecture
-
-## System Architecture
 
 ```mermaid
 flowchart TD
@@ -140,7 +135,6 @@ flowchart TD
     J --> K["Citation & Grounding Checks"]
     K --> L["Final Answer"]
 ```
-
 
 
 **Supporting modules:** `compare_versions.py` – document comparison; `sync_qdrant_dates.py` – date synchronization; `test_regulatory_rag.py` – automated testing.
@@ -224,10 +218,6 @@ The model generates a response based on the retrieved regulatory context, with c
 ## Project Structure
 
 The following is a logical overview of the major project modules. Supporting scripts and data directories may vary across versions.
-
-## Project Structure
-
-## Project Structure
 
 ```text
 ArthaOne/
@@ -483,7 +473,6 @@ Potential areas for further development include:
 ---
 
 ## Team
-
 
 The project involves collaborative development across the following technical areas:
 
