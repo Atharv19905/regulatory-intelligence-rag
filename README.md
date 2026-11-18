@@ -431,6 +431,21 @@ This helps make historical regulatory research more context-aware.
 
 ---
 
+## Screenshots:
+**Home Page:**
+<img width="1534" height="726" alt="home" src="https://github.com/user-attachments/assets/1944ea56-9d7a-490a-a2de-8534ba36b4ed" />
+
+**Dashboard:**
+<img width="989" height="654" alt="qa" src="https://github.com/user-attachments/assets/faa1a7bf-f8a1-4e08-b0e3-4f556925c718" />
+
+**Document List:**
+<img width="1157" height="642" alt="list" src="https://github.com/user-attachments/assets/ff5a2683-a411-4c47-916c-148449c205ef" />
+
+**Document Stats:**
+<img width="1042" height="536" alt="stats1" src="https://github.com/user-attachments/assets/3908c31b-9299-4897-ab33-e083fa82f823" />
+
+
+
 ## Current Implementation Status
 
 The project is under active development. The following table distinguishes implemented functionality from areas requiring further validation.
